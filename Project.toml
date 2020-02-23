@@ -1,0 +1,13 @@
+name = "EvolutionaryAlgs"
+uuid = "5a985ec2-6a8f-4a7d-a0f5-03fa864029cd"
+authors = ["EloyBG97"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
