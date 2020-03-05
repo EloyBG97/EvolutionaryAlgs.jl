@@ -1,5 +1,5 @@
 module EvolutionaryAlgs
 
-greet() = print("Hello World!")
+include("genetic_algorithm/genetic_algorithm.jl")
 
 end # module

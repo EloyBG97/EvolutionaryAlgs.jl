@@ -1,5 +1,1 @@
-module genetic_algorithm
-    include("selection.jl")
-
-
-end
+include("selection.jl")
