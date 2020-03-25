@@ -11,10 +11,12 @@ using Test
         index_array = Array{Int64, 1}(undef, repeats)
         prob_array = Array{Int64, 1}(undef, n)
 
+        population = rand(n,2)
         fitness = rand(n)
 
+
         for i in 1:repeats
-            index_array[i] = EvolutionaryAlgs.linear_selection(fitness)
+            index_array[i] = EvolutionaryAlgs.linear_selection(population, fitness)
         end
 
         for i in 1:n

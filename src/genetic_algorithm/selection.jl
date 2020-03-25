@@ -11,7 +11,9 @@ For each gen, is been assigned a probability to be chosen by the next formula:\n
 
 fitnes -> fitness value array\n
 """
-function roulette_wheel_selection(fitness::AbstractArray{<: Real, 1})
+function roulette_wheel_selection(
+    population::AbstractArray{<: Real, 2},
+    fitness::AbstractArray{<: Real, 1})
 
     sumfitness = 1 / sum(fitness)
     selection_prob = fitness * sumfitness
@@ -37,6 +39,7 @@ For each gen, is been assigned a probability to be chosen by the fitness value\n
 fitnes -> fitness value array\n
 """
 function linear_selection(
+    fpopulation::AbstractArray{<: Real, 2},
     fitness::AbstractArray{<: Real, 1}
 )
     maxfitness = 1 / maximum(fitness)
@@ -64,6 +67,7 @@ fitnes -> fitness value array\n
 k -> Number of competitors\n
 """
 function tournament_selection(
+    population::AbstractArray{<: Real, 2},
     fitness::AbstractArray{<: Real, 1};
     k::Integer = 3
 )
@@ -83,7 +87,8 @@ distance -> way to calculate distances\n
 nnam -> size of the group\n
 """
 function reverse_mixed_pairing_selection(
-    population::AbstractArray{<: Real, 2};
+    population::AbstractArray{<: Real, 2},
+    fitness::AbstractArray{<: Real, 1};
     distance::Metric = Euclidean(),
     nnam::Integer = 3
 )
