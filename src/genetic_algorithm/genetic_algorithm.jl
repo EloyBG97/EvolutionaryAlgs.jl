@@ -61,6 +61,7 @@ function optimizeEGA(
 
    i = 1
    while eval < maxeval
+
       p1_idx = fselect(population, fitness)
       p2_idx = fselect(population, fitness)
 

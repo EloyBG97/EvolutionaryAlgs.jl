@@ -18,7 +18,8 @@ function roulette_wheel_selection(
     sumfitness = 1 / sum(fitness)
     selection_prob = fitness * sumfitness
 
-    fitness_sort = sort(fitness)
+    fitness_sort_idx = sortperm(fitness)
+    fitness_sort = fitness[fitness_sort_idx]
     sort!(selection_prob)
 
     selection_acum_prob = cumsum(selection_prob)
@@ -29,7 +30,7 @@ function roulette_wheel_selection(
 
     i = index_fitness_sort[index_bit][1]
 
-    findall(x->x==fitness_sort[i], fitness)[1]
+    fitness_sort_idx[i]
 
 end
 
