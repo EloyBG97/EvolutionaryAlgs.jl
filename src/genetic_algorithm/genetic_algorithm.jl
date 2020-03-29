@@ -1,13 +1,9 @@
-include("selection.jl")
-include("cross.jl")
-include("mutation.jl")
-
+include("../utility/selection.jl")
+include("../utility/GA/cross.jl")
+include("../utility/GA/mutation.jl")
+include("../utility/callbacks.jl")
 
 using Distributions
-
-function callback_none(i, population, fitness)
-   nothing
-end
 
 function optimizeEGA(
    ffitness::Function,

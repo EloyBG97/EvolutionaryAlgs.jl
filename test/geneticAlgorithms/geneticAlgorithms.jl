@@ -9,12 +9,14 @@ using Test
     include("mutation/mutation.jl")
 
     @test begin
-        pop, fit = EvolutionaryAlgs.optimizeGGA(x -> x[1]*x[1] + x[2]*x[2] , 1000, popsize=6, ndim = 2, dmin = 0, dmax = 10)
+        pop, fit = EvolutionaryAlgs.optimizeGGA(x -> x[1]*x[1] + x[2]*x[2] , 1000, popsize=6, ndim = 2, dmin = 0, dmax = 10, fcallback = EvolutionaryAlgs.callback_print)
         true
     end
 
     @test begin
-        pop, fit = EvolutionaryAlgs.optimizeEGA(x -> x[1]*x[1] + x[2]*x[2] , 1000, popsize=6, ndim = 2, dmin = 0, dmax = 10)
+
+
+        pop, fit = EvolutionaryAlgs.optimizeEGA(x -> x[1]*x[1] + x[2]*x[2] , 2500, popsize=60, ndim = 2, dmin = 0, dmax = 10, fcallback = EvolutionaryAlgs.callback_print)
         true
     end
 
