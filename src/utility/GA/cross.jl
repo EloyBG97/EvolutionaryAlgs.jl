@@ -21,9 +21,8 @@ function arithmetic_cross(
         h1 = div(p1 + p2, 2)
     end
 
-    h2 = [missing for _ = 1:length(p1)]
 
-    reshape([h1 h2], 2, length(p1))
+    reshape(h1, 1, length(p1))
 end
 """
 $(SIGNATURES)

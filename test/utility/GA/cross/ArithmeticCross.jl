@@ -8,6 +8,6 @@ using Test
 
         h = EvolutionaryAlgs.arithmetic_cross(p1, p2)
 
-        h == (p1 + p2) / 2
+        h == reshape((p1 + p2) / 2, 1, 5)
     end
 end

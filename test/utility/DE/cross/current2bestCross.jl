@@ -1,7 +1,7 @@
 using EvolutionaryAlgs
 using Test
 
-@testset "bestCross.jl" begin
+@testset "current2bestCross.jl" begin
     @test begin
         current = rand(5)
         best = rand(5)
@@ -12,9 +12,8 @@ using Test
         @assert size(current) == size(parent1)
         @assert size(current) == size(parent2)
 
-        h = EvolutionaryAlgs.bestCross(current, best, parent1, parent2)
+        h = EvolutionaryAlgs.current2bestCross(current, best, parent1, parent2)
 
-        println(h)
-        size(h) == size(current)
+        size(h) == (1, 5)
     end
 end
