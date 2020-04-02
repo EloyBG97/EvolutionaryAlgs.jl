@@ -2,8 +2,8 @@ function callback_none(i, population, fitness)
    nothing
 end
 
-function callback_print(i, pop, fit)
-    best = argmax(fit)
+function callback_print(i, pop, fit; best = argmax)
+    best = best(fit)
 
     println("Selection ", i,": ")
     println(pop[best,:])

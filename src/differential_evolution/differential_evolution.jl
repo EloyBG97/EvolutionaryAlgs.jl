@@ -20,7 +20,7 @@ function optimizeDE(
 )
 
    @assert ((popsize != 0 && ndim != 0) || size(population) != (0, 0)) "Error, ndim and popsize must be defined"
-
+   @assert dmin < dmax "dmin < dmax"
 
    if maximize
       fworst = x -> argmin(x)
