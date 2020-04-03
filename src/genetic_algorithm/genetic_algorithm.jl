@@ -25,9 +25,11 @@ function optimizeEGA(
    @assert ((popsize != 0 && ndim != 0) || size(population) != (0, 0)) "Error, ndim and popsize must be defined"
 
    if maximize
+      fbest = x -> argmax(x)
       fworst = x -> argmin(x)
       cmp = (a, b) -> a < b
    else
+      fbest = x -> argmin(x)
       fworst = x -> argmax(x)
       cmp = (a, b) -> a > b
    end
@@ -89,7 +91,7 @@ function optimizeEGA(
          end
       end
 
-      fcallback(i, population, fitness)
+      fcallback(i, population, fitness, fbest = fbest)
       i += 1
    end
 

@@ -6,4 +6,6 @@ using Test
     # Write your own tests here.
     include("geneticAlgorithms/geneticAlgorithms.jl")
     include("differentialEvolution/differentialEvolution.jl")
+    include("BFO/BFO.jl")
+
 end

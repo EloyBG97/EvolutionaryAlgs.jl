@@ -143,7 +143,7 @@ function optimizeBFO(
       population[worst, :] = bestpop
 
 
-      fcallback(l, population, fitness, best = fbest)
+      fcallback(l, population, fitness, fbest = fbest)
    end
 
    return population, fitness

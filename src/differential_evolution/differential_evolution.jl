@@ -94,7 +94,7 @@ function optimizeDE(
       end
 
 
-      fcallback(i, population, fitness)
+      fcallback(i, population, fitness, fbest = fbest)
       i += 1
    end
 
