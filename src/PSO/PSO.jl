@@ -113,8 +113,6 @@ function optimizePSO(
       fitBest[idxBetter] = fitness[idxBetter]
       popBest[idxBetter, :] = population[idxBetter, :]
 
-      println(fitBest)
-
       best = fbest(fitBest)
       gBestPop = popBest[best, :]
       gBestFit = fitBest[best]
