@@ -1,7 +1,7 @@
 module EvolutionaryAlgs
 
-include("genetic_algorithm/genetic_algorithm.jl")
-include("differential_evolution/differential_evolution.jl")
+include("GA/GA.jl")
+include("DE/DE.jl")
 include("BFO/BFO.jl")
 include("PSO/PSO.jl")
 

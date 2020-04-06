@@ -1,11 +1,12 @@
-function callback_none(i, population, fitness)
-   nothing
+function callback_none(i, population, fitness, fbest)
+    nothing
 end
 
-function callback_print(i, pop, fit; fbest)
+function callback_print(i, pop, fit, fbest)
     best = fbest(fit)
 
-    println("Iteration ", i,": ")
-    println(pop[best,:])
+    #print log
+    println("Iteration ", i, ": ")
+    println(pop[best, :])
     println(fit[best])
 end

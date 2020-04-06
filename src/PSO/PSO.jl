@@ -1,12 +1,14 @@
 include("../utility/callbacks.jl")
-include("../utility/PSO/enviroment.jl")
+include("util/enviroment.jl")
+include("../utility/result.jl")
+
 
 function optimizePSOGlobal(
    ffitness::Function,
    maxeval::Integer;
    maximize::Bool = true,
-   population::AbstractArray{<:Real,2} = Array{Real,2}(undef, 0, 0),
-   fitness::AbstractArray{<:Real,1} = Array{Real,1}(undef, 0),
+   population::AbstractArray{<:Real,2} = Array{Float32,2}(undef, 0, 0),
+   fitness::AbstractArray{<:Real,1} = Array{Float64,1}(undef, 0),
    popsize::Integer = 0,
    ndim::Integer = 0,
    dmin::Real = 0.0,
@@ -22,8 +24,8 @@ function optimizePSOGlobal(
    @assert dmin < dmax "dmin < dmax"
 
    if maximize
-      fbest = x -> argmax(x)
-      fworst = x -> argmin(x)
+      fbest = argmax
+      fworst = argmin
 
       cmp = (a, b) -> a < b
    else
@@ -36,6 +38,9 @@ function optimizePSOGlobal(
    if size(population) == (0, 0)
       population = rand(Uniform(dmin, dmax), popsize, ndim)
    else
+      dmin = floor(minimun(population))
+      dmax = ceil(maximun(population))
+
       if ndim == 0
          ndim = size(population, 2)
       else
@@ -74,57 +79,38 @@ function optimizePSOGlobal(
    velocity = rand(Uniform(vmin, vmax), popsize, ndim)
 
    i = 0
-   while eval < maxeval
+   while eval + popsize < maxeval
       velocity =
          velocity +
          phi1 * rand(popsize) .* (popBest - population) +
          phi2 * rand(popsize) .* (reshape(gBestPop, 1, ndim) .- population)
 
 
-      #Test Range Velocity Domain
-      idx = map(x -> x > vmax, velocity)
-      n = count(x -> x == 1, idx)
-
-      velocity[idx] = ones(n) * vmax
-
-      idx = map(x -> x < vmin, velocity)
-      n = count(x -> x == 1, idx)
-
-      velocity[idx] = ones(n) * vmin
-
+      clamp!(velocity, vmin, vmax)
 
       population = population + velocity
-
-      #Test Range Domain
-      idx = map(x -> x > dmax, population)
-      n = count(x -> x == 1, idx)
-
-      population[idx] = ones(n) * dmax
-
-      idx = map(x -> x < dmin, population)
-      n = count(x -> x == 1, idx)
-
-      population[idx] = ones(n) * dmin
-
+      clamp!(population, dmin, dmax)
 
       fitness = map(ffitness, eachrow(population))
-      eval = eval + popsize
 
-      idxBetter = map(cmp, fitBest, fitness)
+      idxBetter = cmp.(fitBest, fitness)
 
-      fitBest[idxBetter] = fitness[idxBetter]
-      popBest[idxBetter, :] = population[idxBetter, :]
+      fitBest[idxBetter] .= fitness[idxBetter]
+      popBest[idxBetter, :] .= population[idxBetter, :]
 
       best = fbest(fitBest)
       gBestPop = popBest[best, :]
       gBestFit = fitBest[best]
 
-      fcallback(i, popBest, fitBest, fbest = fbest)
+      fcallback(i, popBest, fitBest, fbest)
+      eval = eval + popsize
       i = i + 1
    end
 
-   return popBest, fitBest
+   return Result(popBest, fitBest, fbest(fitBest), eval)
 end
+
+
 
 function optimizePSOLocal(
    ffitness::Function,
@@ -148,20 +134,23 @@ function optimizePSOLocal(
    @assert dmin < dmax "dmin < dmax"
 
    if maximize
-      fbest = x -> argmax(x)
-      fworst = x -> argmin(x)
+      fbest = argmax
+      fworst = argmin
 
-      cmp = (a, b) -> a < b
+      cmp = <
    else
-      fbest = x -> argmin(x)
-      fworst = x -> argmax(x)
+      fbest = argmin
+      fworst = argmax
 
-      cmp = (a, b) -> a > b
+      cmp = >
    end
 
    if size(population) == (0, 0)
       population = rand(Uniform(dmin, dmax), popsize, ndim)
    else
+      dmin = floor(minimun(population))
+      dmax = ceil(maximun(population))
+
       if ndim == 0
          ndim = size(population, 2)
       else
@@ -190,14 +179,15 @@ function optimizePSOLocal(
 
    best = fbest(fitBest)
 
-   #Find Enviroment
-   bestEnvPop = findEnviroment(population, fitness, fbest, sizeEnv = sizeEnv)
 
 
    velocity = rand(Uniform(vmin, vmax), popsize, ndim)
 
    i = 0
    while eval < maxeval
+      #Find Enviroment
+      bestEnvPop = findEnviroment(population, fitness, fbest, sizeEnv)
+
       velocity =
          velocity +
          phi1 * rand(popsize) .* (popBest - population) +
@@ -205,46 +195,26 @@ function optimizePSOLocal(
 
 
       #Test Range Velocity Domain
-      idx = map(x -> x > vmax, velocity)
-      n = count(x -> x == 1, idx)
-
-      velocity[idx] = ones(n) * vmax
-
-      idx = map(x -> x < vmin, velocity)
-      n = count(x -> x == 1, idx)
-
-      velocity[idx] = ones(n) * vmin
-
+      clamp!(velocity, dmin, dmax)
 
       population = population + velocity
 
       #Test Range Domain
-      idx = map(x -> x > dmax, population)
-      n = count(x -> x == 1, idx)
-
-      population[idx] = ones(n) * dmax
-
-      idx = map(x -> x < dmin, population)
-      n = count(x -> x == 1, idx)
-
-      population[idx] = ones(n) * dmin
+      clamp!(population, dmin, dmax)
 
 
       fitness = map(ffitness, eachrow(population))
       eval = eval + popsize
 
-      idxBetter = map(cmp, fitBest, fitness)
+      idxBetter = cmp.(fitBest, fitness)
 
-      fitBest[idxBetter] = fitness[idxBetter]
-      popBest[idxBetter, :] = population[idxBetter, :]
-
-      #Find Enviroment
-      bestEnvPop = findEnviroment(population, fitness, fbest, sizeEnv = sizeEnv)
+      fitBest[idxBetter] .= fitness[idxBetter]
+      popBest[idxBetter, :] .= population[idxBetter, :]
 
 
-      fcallback(i, popBest, fitBest, fbest = fbest)
+      fcallback(i, popBest, fitBest, fbest)
       i = i + 1
    end
 
-   return popBest, fitBest
+   return Result(popBest, fitBest, fbest(fitBest), eval)
 end

@@ -1,10 +1,12 @@
 include("../utility/callbacks.jl")
+include("../utility/result.jl")
+
 function optimizeBFO(
    ffitness::Function,
    maxeval::Integer;
    maximize::Bool = true,
-   population::AbstractArray{<:Real,2} = Array{Real,2}(undef, 0, 0),
-   fitness::AbstractArray{<:Real,1} = Array{Real,1}(undef, 0),
+   population::AbstractArray{<:Real,2} = Array{Float32,2}(undef, 0, 0),
+   fitness::AbstractArray{<:Real,1} = Array{Float64,1}(undef, 0),
    chemotasticStep::Integer = 20,
    swinStep::Integer = 20,
    reproductiveStep::Integer = 20,
@@ -22,20 +24,23 @@ function optimizeBFO(
    @assert dmin < dmax "dmin < dmax"
 
    if maximize
-      fbest = x -> argmax(x)
-      fworst = x -> argmin(x)
+      fbest = argmax
+      fworst = argmin
 
-      cmp = (a, b) -> a < b
+      cmp = <
    else
-      fbest = x -> argmin(x)
-      fworst = x -> argmax(x)
+      fbest = argmin
+      fworst = argmax
 
-      cmp = (a, b) -> a > b
+      cmp = >
    end
 
    if size(population) == (0, 0)
       population = rand(Uniform(dmin, dmax), popsize, ndim)
    else
+      dmin = floor(minimun(population))
+      dmax = ceil(maximun(population))
+
       if ndim == 0
          ndim = size(population, 2)
       else
@@ -78,35 +83,29 @@ function optimizeBFO(
                population = population + (runLenght ./ dotpro) .* del
 
                #If JLast is better than fitness
-               idx = map((x, y) -> cmp(x, y), fitness, Jlast)
-               dotpro = map(eachrow(del[idx, :])) do x
-                  sqrt(x'x)
-               end
-
-               population[idx, :] + runLenght * (del[idx, :] ./ dotpro)
+               idx = cmp.(fitness, Jlast)
+               population[idx, :] =
+                  population[idx, :] +
+                  runLenght * (
+                     del[idx, :] ./
+                     sqrt.(sum(del[idx, :] .* del[idx, :], dims = 2))
+                  )
 
                #If JLast is worse than fitness
-               idx = [!i for i in idx]
+               idx = .!idx
                del = rand(Uniform(-1, 1), popsize, ndim)
-               dotpro = map(eachrow(del[idx, :])) do x
-                  sqrt(x'x)
-               end
 
                population[idx, :] =
-                  population[idx, :] + runLenght * (del[idx, :] ./ dotpro)
+                  population[idx, :] +
+                  runLenght * (
+                     del[idx, :] ./
+                     sqrt.(sum(del[idx, :] .* del[idx, :], dims = 2))
+                  )
 
-               #Test Range Domain
-               idx = map(x -> x > dmax, population)
-               n = count(x -> x == 1, idx)
-
-               population[idx] = ones(n) * dmax
-
-               idx = map(x -> x < dmin, population)
-               n = count(x -> x == 1, idx)
-
-               population[idx] = ones(n) * dmin
+               clamp!(population, dmin, dmax)
 
                fitness = map(ffitness, eachrow(population))
+               eval += popsize
 
             end
 
@@ -119,7 +118,6 @@ function optimizeBFO(
 
 
          I = sortperm(Jhealth, rev = maximize)
-         Jhealth1 = Jhealth[I]
 
          halfidx = I[1:div(popsize, 2)]
          halfpop = population[halfidx, :]
@@ -132,19 +130,21 @@ function optimizeBFO(
 
       r = rand(popsize)
 
-      idx = map(x -> x > Ped, r)
+      idx = r .> Ped
       n = count(x -> x == 1, idx)
 
       population[idx, :] = rand(Uniform(dmin, dmax), n, ndim)
       fitness[idx] = map(ffitness, eachrow(population[idx, :]))
+      eval += n
 
       worst = fworst(fitness)
       fitness[worst] = bestfit
       population[worst, :] = bestpop
 
 
-      fcallback(l, population, fitness, fbest = fbest)
+      fcallback(l, population, fitness, fbest)
    end
 
-   return population, fitness
+
+   return Result(population, fitness, fbest(fitness), eval)
 end

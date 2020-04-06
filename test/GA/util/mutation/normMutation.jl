@@ -2,10 +2,10 @@ using EvolutionaryAlgs
 using Test
 
 @testset "normMutation.jl" begin
-    @test begin
+    begin
         p1 = rand(5)
 
         EvolutionaryAlgs.norm_mutation!(p1)
-        true
+        @test true
     end
 end

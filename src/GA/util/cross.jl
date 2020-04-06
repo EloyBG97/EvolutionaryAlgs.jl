@@ -9,9 +9,7 @@ p1 -> Parent2\n
 """
 function arithmetic_cross(
     p1::AbstractArray{T,1},
-    p2::AbstractArray{T,1};
-    dmin::Real = 0,
-    dmax::Real = 1,
+    p2::AbstractArray{T,1},
 ) where {T<:Real}
     @assert length(p1) == length(p2)
 
@@ -34,8 +32,6 @@ function blx_cross(
     p1::AbstractArray{<:Real,1},
     p2::AbstractArray{<:Real,1};
     alpha::Real = 0.3,
-    dmin::Real = 0.0,
-    dmax::Real = 1.0,
 )
     @assert length(p1) == length(p2)
 
@@ -48,23 +44,6 @@ function blx_cross(
 
     sup = c_max + i * alpha
     inf = c_min - i * alpha
-
-    map!(sup, sup) do x
-        if x > dmax
-            dmax
-        else
-            x
-        end
-
-    end
-
-    map!(inf, inf) do x
-        if x < dmin
-            dmin
-        else
-            x
-        end
-    end
 
     interval = [inf sup]
 

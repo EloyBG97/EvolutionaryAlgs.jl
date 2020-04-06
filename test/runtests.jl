@@ -4,8 +4,9 @@ using Test
 
 @testset "EvolutionaryAlgs.jl" begin
     # Write your own tests here.
-    include("geneticAlgorithms/geneticAlgorithms.jl")
-    include("differentialEvolution/differentialEvolution.jl")
+    include("GA/GA.jl")
+    include("DE/DE.jl")
     include("BFO/BFO.jl")
-
+    include("PSO/PSO.jl")
+    include("utility/utility.jl")
 end

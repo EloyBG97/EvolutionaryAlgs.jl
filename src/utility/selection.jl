@@ -12,8 +12,9 @@ For each gen, is been assigned a probability to be chosen by the next formula:\n
 fitnes -> fitness value array\n
 """
 function roulette_wheel_selection(
-    population::AbstractArray{<: Real, 2},
-    fitness::AbstractArray{<: Real, 1})
+    population::AbstractArray{<:Real,2},
+    fitness::AbstractArray{<:Real,1},
+)
 
     sumfitness = 1 / sum(fitness)
     selection_prob = fitness * sumfitness
@@ -40,8 +41,8 @@ For each gen, is been assigned a probability to be chosen by the fitness value\n
 fitnes -> fitness value array\n
 """
 function linear_selection(
-    fpopulation::AbstractArray{<: Real, 2},
-    fitness::AbstractArray{<: Real, 1}
+    fpopulation::AbstractArray{<:Real,2},
+    fitness::AbstractArray{<:Real,1},
 )
     maxfitness = 1 / maximum(fitness)
     selection_prob = fitness * maxfitness
@@ -57,7 +58,7 @@ function linear_selection(
 
     i = index_fitness_sort[index_bit][1]
 
-    findall(x->x==fitness_sort[i], fitness)[1]
+    findall(x -> x == fitness_sort[i], fitness)[1]
 end
 
 
@@ -68,9 +69,9 @@ fitnes -> fitness value array\n
 k -> Number of competitors\n
 """
 function tournament_selection(
-    population::AbstractArray{<: Real, 2},
-    fitness::AbstractArray{<: Real, 1};
-    k::Integer = 3
+    population::AbstractArray{<:Real,2},
+    fitness::AbstractArray{<:Real,1};
+    k::Integer = 3,
 )
     p = rand(1:length(fitness), k)
 
@@ -88,19 +89,22 @@ distance -> way to calculate distances\n
 nnam -> size of the group\n
 """
 function reverse_mixed_pairing_selection(
-    population::AbstractArray{<: Real, 2},
-    fitness::AbstractArray{<: Real, 1};
+    population::AbstractArray{<:Real,2},
+    fitness::AbstractArray{<:Real,1};
     distance::Metric = Euclidean(),
-    nnam::Integer = 3
+    nnam::Integer = 3,
 )
 
     p1 = rand(1:size(population, 1))
     p2 = rand(1:size(population, 1), nnam)
 
-    reference = population[p1,:]
-    posible_parent = reshape(population[p2,:][:], nnam, size(population,2))
+    reference = population[p1, :]
+    posible_parent = reshape(population[p2, :][:], nnam, size(population, 2))
 
-    _distance = map(x -> Distances.evaluate(distance, reference, x), eachrow(posible_parent))
+    _distance = map(
+        x -> Distances.evaluate(distance, reference, x),
+        eachrow(posible_parent),
+    )
     parent = findmax(_distance)[2]
 
     p2[parent]

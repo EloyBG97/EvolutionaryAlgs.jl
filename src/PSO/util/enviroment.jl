@@ -3,9 +3,9 @@ using Distances
 function findEnviroment(
     population::AbstractArray{<:Real,2},
     fitness::AbstractArray{<:Real,1},
-    fbest::Function;
-    sizeEnv::Integer = 3,
-    distance::Metric = Euclidean()
+    fbest::Function,
+    sizeEnv::Integer = 3;
+    distance::Metric = Euclidean(),
 )
     ndim = size(population, 2)
     popsize = size(population, 1)
@@ -25,7 +25,7 @@ function findEnviroment(
 
         best = fbest(fitness[envIdx])
 
-        enviroment = [enviroment ; reshape(population[best, :], 1, ndim)]
+        enviroment = [enviroment; reshape(population[best, :], 1, ndim)]
     end
 
     enviroment
