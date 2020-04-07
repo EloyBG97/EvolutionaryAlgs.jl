@@ -8,17 +8,12 @@ p1 -> Parent1\n
 p1 -> Parent2\n
 """
 function arithmetic_cross(
-    p1::AbstractArray{T,1},
-    p2::AbstractArray{T,1},
-) where {T<:Real}
+    p1::AbstractArray{<:Real,1},
+    p2::AbstractArray{<:Real,1},
+)
     @assert length(p1) == length(p2)
 
-    if T <: AbstractFloat
-        h1 = (p1 + p2) / 2
-    else
-        h1 = div(p1 + p2, 2)
-    end
-
+    h1 = (p1 + p2) / 2
 
     reshape(h1, 1, length(p1))
 end

@@ -8,5 +8,6 @@ using Test
     include("DE/DE.jl")
     include("BFO/BFO.jl")
     include("PSO/PSO.jl")
+    include("optimize/optimize.jl")
     include("utility/utility.jl")
 end

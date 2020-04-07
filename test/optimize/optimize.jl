@@ -2,10 +2,35 @@ using EvolutionaryAlgs
 using Test
 
 
-@testset "PSO.jl" begin
+@testset "optimize.jl" begin
     begin
+        alg = DE(fcross = EvolutionaryAlgs.current2bestCross)
+
+
+
         feval = x -> x[1] * x[1] + x[2] * x[2]
-        result = EvolutionaryAlgs.optimizePSOGlobal(
+        result = EvolutionaryAlgs.optimize(
+            feval,
+            1000,
+            maximize = true,
+            population = rand(60, 2),
+            dmin = 0,
+            dmax = 10,
+            alg = alg,
+        )
+
+        @test result.evals <= 1000
+        @test all(result.fitness[result.bestidx] .>= result.fitness)
+        @test all(map(feval, eachrow(result.population)) == result.fitness)
+        @test result.population == clamp.(result.population, 0, 10)
+
+    end
+
+    begin
+        alg = SSGA(fcross = EvolutionaryAlgs.arithmetic_cross)
+
+        feval = x -> x[1] * x[1] + x[2] * x[2]
+        result = EvolutionaryAlgs.optimize(
             feval,
             1000,
             maximize = true,
@@ -13,6 +38,7 @@ using Test
             ndim = 2,
             dmin = 0,
             dmax = 10,
+            alg = alg,
         )
 
         @test result.evals <= 1000
@@ -22,15 +48,18 @@ using Test
     end
 
     begin
+        alg = GGA(pcross = 0.75, pmutation = 0.25)
+
         feval = x -> x[1] * x[1] + x[2] * x[2]
-        result = EvolutionaryAlgs.optimizePSOLocal(
+        result = EvolutionaryAlgs.optimize(
             feval,
-            500,
+            1000,
             maximize = true,
-            popsize = 30,
+            popsize = 60,
             ndim = 2,
             dmin = 0,
             dmax = 10,
+            alg = alg,
         )
 
         @test result.evals <= 1000

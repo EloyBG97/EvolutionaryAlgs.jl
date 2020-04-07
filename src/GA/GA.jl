@@ -7,90 +7,60 @@ include("../utility/result.jl")
 
 using Distributions
 
-function optimizeSSGA(
-   ffitness::Function,
-   maxeval::Integer;
-   maximize::Bool = true,
-   population::AbstractArray{<:Real,2} = Array{Real,2}(undef, 0, 0),
-   fitness::AbstractArray{<:Real,1} = Array{Real,1}(undef, 0),
+export SSGA, GGA
+
+function SSGA(;
    fcross::Function = blx_cross,
    fselect::Function = roulette_wheel_selection,
    fmutation::Function = norm_mutation!,
    pmutation::Real = 0.3,
-   popsize::Integer = 0,
-   ndim::Integer = 0,
-   dmin::Real = 0.0,
-   dmax::Real = 1.0,
-   fcallback::Function = callback_none,
 )
 
-   @assert ((popsize != 0 && ndim != 0) || size(population) != (0, 0)) "Error, ndim and popsize must be defined"
+   (population, fitness, ffitness, cmp, fbest, fworst, dmin, dmax) -> privateSSGA(
+      population,
+      fitness,
+      ffitness,
+      cmp,
+      fbest,
+      fworst,
+      dmin,
+      dmax,
+      fcross = fcross,
+      fselect = fselect,
+      fmutation = fmutation,
+      pmutation = pmutation,
+   )
 
-   if maximize
-      fbest = argmax
-      fworst = argmin
-      cmp = <
-   else
-      fbest = argmin
-      fworst = argmax
-      cmp = >
-   end
-
-   if size(population) == (0, 0)
-      population = rand(Uniform(dmin, dmax), popsize, ndim)
-   else
-      dmin = floor(minimun(population))
-      dmax = ceil(maximun(population))
-
-      if ndim == 0
-         ndim = size(population, 2)
-      else
-         @assert ndim == size(population, 2)
-      end
-
-      if popsize == 0
-         popsize = size(population, 1)
-      else
-         @assert popsize == size(population, 1)
-      end
-   end
-
-   if size(fitness) == (0,)
-      fitness = map(ffitness, eachrow(population))
-      eval = popsize
-   else
-      eval = 0
-   end
-
-   result = Result(population, fitness, fbest(fitness), eval)
-
-   i = 1
-   while eval + popsize < maxeval
-
-      result = iterationSSGA(
-         result.population,
-         result.fitness,
-         ffitness,
-         cmp,
-         fbest,
-         fworst,
-         dmin,
-         dmax,
-         fcross = fcross,
-         fselect = fselect,
-         fmutation = fmutation,
-         pmutation = pmutation,
-      )
-
-      fcallback(i, population, fitness, fbest)
-      eval += result.evals
-      i += 1
-   end
-
-   return Result(population, fitness, fbest(fitness), eval)
 end
 
-function iterationSSGA(
+function GGA(;
+   fcross::Function = blx_cross,
+   fselect::Function = roulette_wheel_selection,
+   fmutation::Function = norm_mutation!,
+   pmutation::Real = 0.3,
+   pcross::Real = 0.7,
+)
+
+   (population, fitness, ffitness, cmp, fbest, fworst, dmin, dmax) -> privateGGA(
+      population,
+      fitness,
+      ffitness,
+      cmp,
+      fbest,
+      fworst,
+      dmin,
+      dmax,
+      fcross = fcross,
+      fselect = fselect,
+      fmutation = fmutation,
+      pmutation = pmutation,
+      pcross = pcross,
+   )
+
+end
+
+
+function privateSSGA(
    population::AbstractArray{<:Real,2},
    fitness::AbstractArray{<:Real,1},
    ffitness::Function,
@@ -104,6 +74,8 @@ function iterationSSGA(
    fmutation::Function = norm_mutation!,
    pmutation::Real = 0.3,
 )
+
+   @assert 0 <= pmutation <= 1 "pmutation must be in [0,1]"
 
    p1_idx = fselect(population, fitness)
    p2_idx = fselect(population, fitness)
@@ -139,94 +111,7 @@ function iterationSSGA(
    return Result(population, fitness, fbest(fitness), length(fit_children))
 end
 
-function optimizeGGA(
-   ffitness::Function,
-   maxeval::Integer;
-   maximize::Bool = true,
-   population::AbstractArray{<:Real,2} = Array{Real,2}(undef, 0, 0),
-   fitness::AbstractArray{<:Real,1} = Array{Real,1}(undef, 0),
-   fcross::Function = blx_cross,
-   fselect::Function = roulette_wheel_selection,
-   fmutation::Function = norm_mutation!,
-   pmutation::Real = 0.3,
-   pcross::Real = 0.7,
-   popsize::Integer = 0,
-   ndim::Integer = 0,
-   dmin::Real = 0.0,
-   dmax::Real = 1.0,
-   fcallback::Function = callback_none,
-)
-
-   @assert ((popsize != 0 && ndim != 0) || size(population) != (0, 0)) "Error, ndim and popsize must be defined"
-
-   if maximize
-      fbest = argmax
-      fworst = argmin
-   else
-      fbest = argmin
-      fworst = argmax
-   end
-
-   if size(population) == (0, 0)
-      population = rand(Uniform(dmin, dmax), popsize, ndim)
-   else
-      dmin = floor(minimun(population))
-      dmax = ceil(maximun(population))
-
-      if ndim == 0
-         ndim = size(population, 2)
-      else
-         @assert ndim == size(population, 2)
-      end
-
-      if popsize == 0
-         popsize = size(population, 1)
-      else
-         @assert popsize == size(population, 1)
-      end
-   end
-
-   if size(fitness) == (0,)
-      fitness = map(ffitness, eachrow(population))
-      eval = popsize
-   else
-      eval = 0
-   end
-
-   i = 1
-
-
-   result = Result(population, fitness, fbest(fitness), eval)
-
-   i = 1
-   while eval + popsize < maxeval
-
-      result = iterationGGA(
-         result.population,
-         result.fitness,
-         ffitness,
-         cmp,
-         fbest,
-         fworst,
-         dmin,
-         dmax,
-         fcross = fcross,
-         fselect = fselect,
-         fmutation = fmutation,
-         pmutation = pmutation,
-         pcross = pcross,
-      )
-
-      fcallback(i, population, fitness, fbest)
-      eval += result.evals
-      i += 1
-   end
-
-
-   return Result(population, fitness, fbest(fitness), eval)
-end
-
-function iterationGGA(
+function privateGGA(
    population::AbstractArray{<:Real,2},
    fitness::AbstractArray{<:Real,1},
    ffitness::Function,
@@ -241,6 +126,11 @@ function iterationGGA(
    pmutation::Real = 0.3,
    pcross::Real = 0.7,
 )
+
+   @assert 0 <= pmutation <= 1 "pmutation must be in [0,1]"
+   @assert 0 <= pcross <= 1 "pcross must be in [0,1]"
+
+
    popsize = size(population, 1)
    ndim = size(population, 2)
 
