@@ -9,7 +9,7 @@ using Test
 
 
         feval = x -> x[1] * x[1] + x[2] * x[2]
-        result = EvolutionaryAlgs.optimize(
+        result = optimize(
             feval,
             1000,
             maximize = true,
@@ -30,7 +30,7 @@ using Test
         alg = SSGA(fcross = EvolutionaryAlgs.arithmetic_cross)
 
         feval = x -> x[1] * x[1] + x[2] * x[2]
-        result = EvolutionaryAlgs.optimize(
+        result = optimize(
             feval,
             1000,
             maximize = true,
@@ -51,7 +51,7 @@ using Test
         alg = GGA(pcross = 0.75, pmutation = 0.25)
 
         feval = x -> x[1] * x[1] + x[2] * x[2]
-        result = EvolutionaryAlgs.optimize(
+        result = optimize(
             feval,
             1000,
             maximize = true,
@@ -68,4 +68,25 @@ using Test
         @test result.population == clamp.(result.population, 0, 10)
     end
 
+    begin
+        alg = BFO()
+
+        feval = x -> x[1] * x[1] + x[2] * x[2]
+
+        result = optimize(
+            feval,
+            1000,
+            maximize = true,
+            popsize = 60,
+            ndim = 2,
+            dmin = 0,
+            dmax = 10,
+            alg = alg
+        )
+
+        @test result.evals <= 1000
+        @test all(result.fitness[result.bestidx] .>= result.fitness)
+        @test all(map(feval, eachrow(result.population)) == result.fitness)
+        @test result.population == clamp.(result.population, 0, 10)
+    end
 end

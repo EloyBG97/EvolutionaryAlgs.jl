@@ -16,10 +16,11 @@ function SSGA(;
    pmutation::Real = 0.3,
 )
 
-   (population, fitness, ffitness, cmp, fbest, fworst, dmin, dmax) -> privateSSGA(
-      population,
-      fitness,
+   (result, ffitness, maxeval, maximize, cmp, fbest, fworst, dmin, dmax) -> privateSSGA(
+      result,
       ffitness,
+      maxeval,
+      maximize,
       cmp,
       fbest,
       fworst,
@@ -41,10 +42,11 @@ function GGA(;
    pcross::Real = 0.7,
 )
 
-   (population, fitness, ffitness, cmp, fbest, fworst, dmin, dmax) -> privateGGA(
-      population,
-      fitness,
+   (result, ffitness, maxeval, maximize, cmp, fbest, fworst, dmin, dmax) -> privateGGA(
+      result,
       ffitness,
+      maxeval,
+      maximize,
       cmp,
       fbest,
       fworst,
@@ -61,9 +63,10 @@ end
 
 
 function privateSSGA(
-   population::AbstractArray{<:Real,2},
-   fitness::AbstractArray{<:Real,1},
+   input::Result,
    ffitness::Function,
+   maxeval::Integer,
+   maximize::Bool,
    cmp::Function,
    fbest::Function,
    fworst::Function,
@@ -76,16 +79,17 @@ function privateSSGA(
 )
 
    @assert 0 <= pmutation <= 1 "pmutation must be in [0,1]"
+   
 
-   p1_idx = fselect(population, fitness)
-   p2_idx = fselect(population, fitness)
+   p1_idx = fselect(input.population, input.fitness)
+   p2_idx = fselect(input.population, input.fitness)
 
    while p1_idx == p2_idx
-      p2_idx = fselect(population, fitness)
+      p2_idx = fselect(input.population, input.fitness)
    end
 
-   p1 = population[p1_idx, :]
-   p2 = population[p2_idx, :]
+   p1 = input.population[p1_idx, :]
+   p2 = input.population[p2_idx, :]
 
    h = fcross(p1, p2)
 
@@ -100,21 +104,22 @@ function privateSSGA(
    fit_children = map(ffitness, eachrow(h))
 
    map(eachrow(h), fit_children) do x, y
-      worst = fworst(fitness)
+      worst = fworst(input.fitness)
 
-      if cmp(fitness[worst], y)
-         population[worst, :] = x
-         fitness[worst] = y
+      if cmp(input.fitness[worst], y)
+         input.population[worst, :] = x
+         input.fitness[worst] = y
       end
    end
 
-   return Result(population, fitness, fbest(fitness), length(fit_children))
+   return Result(input.population, input.fitness, fbest(input.fitness), length(fit_children))
 end
 
 function privateGGA(
-   population::AbstractArray{<:Real,2},
-   fitness::AbstractArray{<:Real,1},
+   input::Result,
    ffitness::Function,
+   maxeval::Integer,
+   maximize::Bool,
    cmp::Function,
    fbest::Function,
    fworst::Function,
@@ -131,8 +136,8 @@ function privateGGA(
    @assert 0 <= pcross <= 1 "pcross must be in [0,1]"
 
 
-   popsize = size(population, 1)
-   ndim = size(population, 2)
+   popsize = size(input.population, 1)
+   ndim = size(input.population, 2)
 
    nextpop = Array{Real,2}(undef, 0, ndim)
    nextfit = Array{Real,1}(undef, 0)
@@ -142,16 +147,16 @@ function privateGGA(
    fit_children = nothing
 
    for _ = 1:ncross
-      p1_idx = fselect(population, fitness)
+      p1_idx = fselect(input.population, input.fitness)
 
-      p2_idx = fselect(population, fitness)
+      p2_idx = fselect(input.population, input.fitness)
 
       while p2_idx == p1_idx
-         p2_idx = fselect(population, fitness)
+         p2_idx = fselect(input.population, input.fitness)
       end
 
-      p1 = population[p1_idx, :]
-      p2 = population[p2_idx, :]
+      p1 = input.population[p1_idx, :]
+      p2 = input.population[p2_idx, :]
 
 
       h = fcross(p1, p2)
@@ -179,17 +184,17 @@ function privateGGA(
    nextfit = nextfit[bestnextpop]
 
    #Elitism
-   best = fbest(fitness)
-   bestpop = population[best, :]
-   bestfit = fitness[best]
+   best = fbest(input.fitness)
+   bestpop = input.population[best, :]
+   bestfit = input.fitness[best]
 
-   population = nextpop[1:popsize, :]
-   fitness = nextfit[1:popsize]
+   input.population = nextpop[1:popsize, :]
+   input.fitness = nextfit[1:popsize]
 
-   worst = fworst(fitness)
-   fitness[worst] = bestfit
-   population[worst, :] = bestpop
+   worst = fworst(input.fitness)
+   input.fitness[worst] = bestfit
+   input.population[worst, :] = bestpop
 
-   return Result(population, fitness, fbest(fitness), ncross * eval)
+   return Result(input.population, input.fitness, fbest(input.fitness), ncross * eval)
 
 end

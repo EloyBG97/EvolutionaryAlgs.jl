@@ -1,3 +1,5 @@
+export optimize
+
 function optimize(
    ffitness::Function,
    maxeval::Integer;
@@ -68,9 +70,10 @@ function optimize(
    while eval + popsize < maxeval
 
       result = alg(
-         result.population,
-         result.fitness,
+         result,
          ffitness,
+         maxeval,
+         maximize,
          cmp,
          fbest,
          fworst,
