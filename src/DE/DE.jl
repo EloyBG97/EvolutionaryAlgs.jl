@@ -13,6 +13,11 @@ mutable struct DEIn
    fcross::Function
 end
 
+function setData!(self::DEIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+   self.population = population
+   self.fitness = fitness
+end
+
 function DE(; fcross::Function = bestCross)
    DEIn(Array{Float32}(undef, 0,0), Array{Float32}(undef, 0), 0, fcross)
 end
@@ -47,4 +52,6 @@ function optimize!(
    input.population[idx, :] = nextpop[idx, :]
 
    input.nEvals += length(nextfit)
+
+   nothing
 end

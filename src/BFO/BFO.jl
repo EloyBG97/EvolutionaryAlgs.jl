@@ -1,5 +1,4 @@
 include("../utility/callbacks.jl")
-include("../utility/result.jl")
 
 export BFO
 
@@ -12,6 +11,11 @@ mutable struct BFOIn
    reproductiveStep::Integer
    Ped::Real
    runLength::Real
+end
+
+function setData!(self::BFOIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+   self.population = population
+   self.fitness = fitness
 end
 
 function BFO(;

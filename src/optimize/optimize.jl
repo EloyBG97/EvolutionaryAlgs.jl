@@ -1,3 +1,5 @@
+include("../utility/result.jl")
+
 export optimize
 
 function optimize(
@@ -65,8 +67,7 @@ function optimize(
    end
 
    alg.nEvals += eval
-   alg.population = population
-   alg.fitness = fitness
+   setData!(alg, population, fitness)
 
    i = 1
    while alg.nEvals + popsize < maxeval

@@ -18,6 +18,11 @@ mutable struct SSGAIn
    pmutation::Real
 end
 
+function setData!(self::SSGAIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+   self.population = population
+   self.fitness = fitness
+end
+
 mutable struct GGAIn
    population::AbstractArray{<:Real, 2}
    fitness::AbstractArray{<:Real, 1}
@@ -27,6 +32,11 @@ mutable struct GGAIn
    fmutation::Function
    pmutation::Real
    pcross::Real
+end
+
+function setData!(self::GGAIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+   self.population = population
+   self.fitness = fitness
 end
 
 function SSGA(;

@@ -1,220 +1,160 @@
-include("../utility/callbacks.jl")
 include("util/enviroment.jl")
-include("../utility/result.jl")
+
+export PSOG, PSOL
+
+#BEGIN STRUCT DEFINITION
+mutable struct PSOGIn
+   population::AbstractArray{<:Real, 2}
+   fitness::AbstractArray{<:Real, 1}
+   nEvals::Integer
+   
+   bestpop::AbstractArray{<:Real, 2}
+   bestfit::AbstractArray{<:Real, 1}
+   velocity::AbstractArray{<:Real, 2}
+   vmax::Real
+   vmin::Real
+   phi1::Real
+   phi2::Real           
+end
+
+function setData!(self::PSOGIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+   self.population = population
+   self.bestpop = population
+
+   self.fitness = fitness
+   self.bestfit = fitness
+
+   self.velocity = rand(Uniform(self.vmin, self.vmax), size(population))
+end
+
+#BEGIN STRUCT DEFINITION
+mutable struct PSOLIn
+   population::AbstractArray{<:Real, 2}
+   fitness::AbstractArray{<:Real, 1}
+   nEvals::Integer
+
+   bestpop::AbstractArray{<:Real, 2}
+   bestfit::AbstractArray{<:Real, 1}
+   velocity::AbstractArray{<:Real, 2}
+   vmax::Real
+   vmin::Real
+   phi1::Real
+   phi2::Real
+   sizeEnv::Integer
+end
+
+function setData!(self::PSOLIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+   self.population = population
+   self.bestpop = population
+
+   self.fitness = fitness
+   self.bestfit = fitness
+
+   self.velocity = rand(Uniform(self.vmin, self.vmax), size(population))
+end
 
 
-function optimizePSOGlobal(
+function PSOG(; vmax::Real = 1, vmin::Real = 0, phi1::Real = 1.05, phi2::Real = 1.05)
+   PSOGIn(Array{Float32}(undef, 0, 0), Array{Float64}(undef, 0), 0,
+        Array{Float32}(undef, 0, 0), Array{Float64}(undef, 0),
+        Array{Float32}(undef, 0, 0), vmax, vmin, phi1, phi2)
+end
+
+function PSOL(; vmax::Real = 1, vmin::Real = 0, phi1::Real = 1.05, phi2::Real = 1.05, sizeEnv::Integer = 3)
+   PSOLIn(Array{Float32}(undef, 0, 0), Array{Float64}(undef, 0), 0,
+        Array{Float32}(undef, 0, 0), Array{Float64}(undef, 0),
+        Array{Float32}(undef, 0, 0), vmax, vmin, phi1, phi2, sizeEnv)
+end
+
+
+function optimize!(
+   input::PSOGIn,
    ffitness::Function,
-   maxeval::Integer;
-   maximize::Bool = true,
-   population::AbstractArray{<:Real,2} = Array{Float32,2}(undef, 0, 0),
-   fitness::AbstractArray{<:Real,1} = Array{Float64,1}(undef, 0),
-   popsize::Integer = 0,
-   ndim::Integer = 0,
+   maxeval::Integer,
+   maximize::Bool,
+   cmp::Function,
+   fbest::Function,
+   fworst::Function,
    dmin::Real = 0.0,
    dmax::Real = 1.0,
-   vmin::Real = 0.0,
-   vmax::Real = 1.0,
-   phi1::Real = 1.05,
-   phi2::Real = 1.05,
-   fcallback::Function = callback_none,
 )
 
-   @assert ((popsize != 0 && ndim != 0) || size(population) != (0, 0)) "Error, ndim and popsize must be defined"
-   @assert dmin < dmax "dmin < dmax"
+   popsize = size(input.population, 1)
+   ndim = size(input.population, 2)
 
-   if maximize
-      fbest = argmax
-      fworst = argmin
-
-      cmp = (a, b) -> a < b
-   else
-      fbest = x -> argmin(x)
-      fworst = x -> argmax(x)
-
-      cmp = (a, b) -> a > b
-   end
-
-   if size(population) == (0, 0)
-      population = rand(Uniform(dmin, dmax), popsize, ndim)
-   else
-      dmin = floor(minimun(population))
-      dmax = ceil(maximun(population))
-
-      if ndim == 0
-         ndim = size(population, 2)
-      else
-         @assert ndim == size(population, 2)
-      end
-
-      if popsize == 0
-         popsize = size(population, 1)
-      else
-         @assert popsize == size(population, 1)
-      end
-   end
-
-   if size(fitness) == (0,)
-      fitness = map(ffitness, eachrow(population))
-      eval = popsize
-   else
-      eval = 0
-   end
-
-   #Best particle position
-   popBest = population
-
-   #Best particle fitness
-   fitBest = fitness
-
-   best = fbest(fitBest)
+   best = fbest(input.bestfit)
 
    #Best global position
-   gBestPop = popBest[best, :]
+   globalbestpop = input.bestpop[best, :]
 
    #Best global fitness
-   gBestFit = fitBest[best]
+   globalbestfit = input.bestfit[best]
+
+   input.velocity =
+      input.velocity +
+      input.phi1 * rand(popsize) .* (input.bestpop - input.population) +
+      input.phi2 * rand(popsize) .* (reshape(globalbestpop, 1, ndim) .- input.population)
 
 
-   velocity = rand(Uniform(vmin, vmax), popsize, ndim)
+   clamp!(input.velocity, input.vmin, input.vmax)
 
-   i = 0
-   while eval + popsize < maxeval
-      velocity =
-         velocity +
-         phi1 * rand(popsize) .* (popBest - population) +
-         phi2 * rand(popsize) .* (reshape(gBestPop, 1, ndim) .- population)
+   input.population = input.population + input.velocity
+   clamp!(input.population, dmin, dmax)
 
+   input.fitness = map(ffitness, eachrow(input.population))
 
-      clamp!(velocity, vmin, vmax)
+   idxBetter = cmp.(input.bestfit, input.fitness)
 
-      population = population + velocity
-      clamp!(population, dmin, dmax)
+   input.bestfit[idxBetter] .= input.fitness[idxBetter]
+   input.bestpop[idxBetter, :] .= input.population[idxBetter, :]
 
-      fitness = map(ffitness, eachrow(population))
-
-      idxBetter = cmp.(fitBest, fitness)
-
-      fitBest[idxBetter] .= fitness[idxBetter]
-      popBest[idxBetter, :] .= population[idxBetter, :]
-
-      best = fbest(fitBest)
-      gBestPop = popBest[best, :]
-      gBestFit = fitBest[best]
-
-      fcallback(i, popBest, fitBest, fbest)
-      eval = eval + popsize
-      i = i + 1
-   end
-
-   return Result(popBest, fitBest, fbest(fitBest), eval)
+   input.nEvals += popsize
+   nothing
 end
 
 
 
-function optimizePSOLocal(
+function optimize!(
+   input::PSOLIn,
    ffitness::Function,
-   maxeval::Integer;
-   maximize::Bool = true,
-   population::AbstractArray{<:Real,2} = Array{Real,2}(undef, 0, 0),
-   fitness::AbstractArray{<:Real,1} = Array{Real,1}(undef, 0),
-   popsize::Integer = 0,
-   ndim::Integer = 0,
+   maxeval::Integer,
+   maximize::Bool,
+   cmp::Function,
+   fbest::Function,
+   fworst::Function,
    dmin::Real = 0.0,
    dmax::Real = 1.0,
-   vmin::Real = 0.0,
-   vmax::Real = 1.0,
-   phi1::Real = 1.05,
-   phi2::Real = 1.05,
-   sizeEnv::Integer = 3,
-   fcallback::Function = callback_none,
+
 )
 
-   @assert ((popsize != 0 && ndim != 0) || size(population) != (0, 0)) "Error, ndim and popsize must be defined"
-   @assert dmin < dmax "dmin < dmax"
+  popsize = size(input.population, 1)
+  ndim = size(input.population, 2)
 
-   if maximize
-      fbest = argmax
-      fworst = argmin
+  #Find Enviroment
+  bestEnvPop = findEnviroment(input.population, input.fitness, fbest, input.sizeEnv)
 
-      cmp = <
-   else
-      fbest = argmin
-      fworst = argmax
-
-      cmp = >
-   end
-
-   if size(population) == (0, 0)
-      population = rand(Uniform(dmin, dmax), popsize, ndim)
-   else
-      dmin = floor(minimun(population))
-      dmax = ceil(maximun(population))
-
-      if ndim == 0
-         ndim = size(population, 2)
-      else
-         @assert ndim == size(population, 2)
-      end
-
-      if popsize == 0
-         popsize = size(population, 1)
-      else
-         @assert popsize == size(population, 1)
-      end
-   end
-
-   if size(fitness) == (0,)
-      fitness = map(ffitness, eachrow(population))
-      eval = popsize
-   else
-      eval = 0
-   end
-
-   #Best particle position
-   popBest = population
-
-   #Best particle fitness
-   fitBest = fitness
-
-   best = fbest(fitBest)
+  input.velocity =
+     input.velocity +
+     input.phi1 * rand(popsize) .* (input.bestpop - input.population) +
+     input.phi2 * rand(popsize) .* (bestEnvPop .- input.population)
 
 
+  #Test Range Velocity Domain
+  clamp!(input.velocity, dmin, dmax)
 
-   velocity = rand(Uniform(vmin, vmax), popsize, ndim)
+  input.population = input.population + input.velocity
 
-   i = 0
-   while eval < maxeval
-      #Find Enviroment
-      bestEnvPop = findEnviroment(population, fitness, fbest, sizeEnv)
-
-      velocity =
-         velocity +
-         phi1 * rand(popsize) .* (popBest - population) +
-         phi2 * rand(popsize) .* (bestEnvPop .- population)
+  #Test Range Domain
+  clamp!(input.population, dmin, dmax)
 
 
-      #Test Range Velocity Domain
-      clamp!(velocity, dmin, dmax)
+  input.fitness = map(ffitness, eachrow(input.population))
 
-      population = population + velocity
+  idxBetter = cmp.(input.bestfit, input.fitness)
 
-      #Test Range Domain
-      clamp!(population, dmin, dmax)
+  input.bestfit[idxBetter] .= input.fitness[idxBetter]
+  input.bestpop[idxBetter, :] .= input.population[idxBetter, :]
 
-
-      fitness = map(ffitness, eachrow(population))
-      eval = eval + popsize
-
-      idxBetter = cmp.(fitBest, fitness)
-
-      fitBest[idxBetter] .= fitness[idxBetter]
-      popBest[idxBetter, :] .= population[idxBetter, :]
-
-
-      fcallback(i, popBest, fitBest, fbest)
-      i = i + 1
-   end
-
-   return Result(popBest, fitBest, fbest(fitBest), eval)
+  input.nEvals += popsize
+  nothing
 end
