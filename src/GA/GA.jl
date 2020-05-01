@@ -2,12 +2,32 @@ include("../utility/selection.jl")
 include("util/cross.jl")
 include("util/mutation.jl")
 include("../utility/callbacks.jl")
-include("../utility/result.jl")
 
 
 using Distributions
 
 export SSGA, GGA
+
+mutable struct SSGAIn
+   population::AbstractArray{<:Real, 2}
+   fitness::AbstractArray{<:Real, 1}
+   nEvals::Integer
+   fcross::Function
+   fselect::Function
+   fmutation::Function
+   pmutation::Real
+end
+
+mutable struct GGAIn
+   population::AbstractArray{<:Real, 2}
+   fitness::AbstractArray{<:Real, 1}
+   nEvals::Integer
+   fcross::Function
+   fselect::Function
+   fmutation::Function
+   pmutation::Real
+   pcross::Real
+end
 
 function SSGA(;
    fcross::Function = blx_cross,
@@ -16,22 +36,7 @@ function SSGA(;
    pmutation::Real = 0.3,
 )
 
-   (result, ffitness, maxeval, maximize, cmp, fbest, fworst, dmin, dmax) -> privateSSGA(
-      result,
-      ffitness,
-      maxeval,
-      maximize,
-      cmp,
-      fbest,
-      fworst,
-      dmin,
-      dmax,
-      fcross = fcross,
-      fselect = fselect,
-      fmutation = fmutation,
-      pmutation = pmutation,
-   )
-
+   SSGAIn(Array{Float32}(undef, 0, 0), Array{Float32}(undef, 0), 0, fcross, fselect, fmutation, pmutation)
 end
 
 function GGA(;
@@ -42,28 +47,12 @@ function GGA(;
    pcross::Real = 0.7,
 )
 
-   (result, ffitness, maxeval, maximize, cmp, fbest, fworst, dmin, dmax) -> privateGGA(
-      result,
-      ffitness,
-      maxeval,
-      maximize,
-      cmp,
-      fbest,
-      fworst,
-      dmin,
-      dmax,
-      fcross = fcross,
-      fselect = fselect,
-      fmutation = fmutation,
-      pmutation = pmutation,
-      pcross = pcross,
-   )
-
+   GGAIn(Array{Float32}(undef, 0, 0), Array{Float32}(undef, 0), 0, fcross, fselect, fmutation, pmutation, pcross)
 end
 
 
-function privateSSGA(
-   input::Result,
+function optimize!(
+   input::SSGAIn,
    ffitness::Function,
    maxeval::Integer,
    maximize::Bool,
@@ -71,31 +60,27 @@ function privateSSGA(
    fbest::Function,
    fworst::Function,
    dmin::Real = 0.0,
-   dmax::Real = 1.0;
-   fcross::Function = blx_cross,
-   fselect::Function = roulette_wheel_selection,
-   fmutation::Function = norm_mutation!,
-   pmutation::Real = 0.3,
+   dmax::Real = 1.0,
 )
 
-   @assert 0 <= pmutation <= 1 "pmutation must be in [0,1]"
+   @assert 0 <= input.pmutation <= 1 "pmutation must be in [0,1]"
    
 
-   p1_idx = fselect(input.population, input.fitness)
-   p2_idx = fselect(input.population, input.fitness)
+   p1_idx = input.fselect(input.population, input.fitness)
+   p2_idx = input.fselect(input.population, input.fitness)
 
    while p1_idx == p2_idx
-      p2_idx = fselect(input.population, input.fitness)
+      p2_idx = input.fselect(input.population, input.fitness)
    end
 
    p1 = input.population[p1_idx, :]
    p2 = input.population[p2_idx, :]
 
-   h = fcross(p1, p2)
+   h = input.fcross(p1, p2)
 
    map(eachrow(h)) do x
-      if pmutation < rand()
-         fmutation(x)
+      if input.pmutation < rand()
+         input.fmutation(x)
       end
    end
 
@@ -112,11 +97,12 @@ function privateSSGA(
       end
    end
 
-   return Result(input.population, input.fitness, fbest(input.fitness), length(fit_children))
+   input.nEvals += length(fit_children)
+   nothing
 end
 
-function privateGGA(
-   input::Result,
+function optimize!(
+   input::GGAIn,
    ffitness::Function,
    maxeval::Integer,
    maximize::Bool,
@@ -124,16 +110,11 @@ function privateGGA(
    fbest::Function,
    fworst::Function,
    dmin::Real = 0.0,
-   dmax::Real = 1.0;
-   fcross::Function = blx_cross,
-   fselect::Function = roulette_wheel_selection,
-   fmutation::Function = norm_mutation!,
-   pmutation::Real = 0.3,
-   pcross::Real = 0.7,
+   dmax::Real = 1.0,
 )
 
-   @assert 0 <= pmutation <= 1 "pmutation must be in [0,1]"
-   @assert 0 <= pcross <= 1 "pcross must be in [0,1]"
+   @assert 0 <= input.pmutation <= 1 "pmutation must be in [0,1]"
+   @assert 0 <= input.pcross <= 1 "pcross must be in [0,1]"
 
 
    popsize = size(input.population, 1)
@@ -142,29 +123,29 @@ function privateGGA(
    nextpop = Array{Real,2}(undef, 0, ndim)
    nextfit = Array{Real,1}(undef, 0)
 
-   ncross = ceil(pcross * popsize)
+   ncross = ceil(input.pcross * popsize)
 
    fit_children = nothing
 
    for _ = 1:ncross
-      p1_idx = fselect(input.population, input.fitness)
+      p1_idx = input.fselect(input.population, input.fitness)
 
-      p2_idx = fselect(input.population, input.fitness)
+      p2_idx = input.fselect(input.population, input.fitness)
 
       while p2_idx == p1_idx
-         p2_idx = fselect(input.population, input.fitness)
+         p2_idx = input.fselect(input.population, input.fitness)
       end
 
       p1 = input.population[p1_idx, :]
       p2 = input.population[p2_idx, :]
 
 
-      h = fcross(p1, p2)
+      h = input.fcross(p1, p2)
 
 
       map(eachrow(h)) do x
-         if pmutation < rand()
-            fmutation(x)
+         if input.pmutation < rand()
+            input.fmutation(x)
          end
       end
 
@@ -177,8 +158,7 @@ function privateGGA(
       nextfit = [nextfit; fit_children]
    end
 
-   eval = length(fit_children)
-
+   
    bestnextpop = sortperm(nextfit)
    nextpop = nextpop[bestnextpop, :]
    nextfit = nextfit[bestnextpop]
@@ -195,6 +175,6 @@ function privateGGA(
    input.fitness[worst] = bestfit
    input.population[worst, :] = bestpop
 
-   return Result(input.population, input.fitness, fbest(input.fitness), ncross * eval)
-
+   input.nEvals += ncross * length(fit_children)
+   nothing
 end

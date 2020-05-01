@@ -6,23 +6,19 @@ using Distributions
 
 export DE
 
-function DE(; fcross::Function = bestCross)
-   (result, ffitness,maxeval, maximize, cmp, fbest, fworst, dmin, dmax) -> privateDE(
-      result,
-      ffitness,
-      maxeval,
-      maximize,
-      cmp,
-      fbest,
-      fworst,
-      dmin,
-      dmax,
-      fcross = fcross,
-   )
+mutable struct DEIn
+   population::AbstractArray{<:Real, 2}
+   fitness::AbstractArray{<:Real, 1}
+   nEvals::Integer
+   fcross::Function
 end
 
-function privateDE(
-   input::Result,
+function DE(; fcross::Function = bestCross)
+   DEIn(Array{Float32}(undef, 0,0), Array{Float32}(undef, 0), 0, fcross)
+end
+
+function optimize!(
+   input::DEIn,
    ffitness::Function,
    maxeval::Integer,
    maximize::Bool,
@@ -31,7 +27,6 @@ function privateDE(
    fworst::Function,
    dmin::Real = 0.0,
    dmax::Real = 1.0;
-   fcross::Function = bestCross,
 )
    popsize = size(input.population, 1)
    ndim = size(input.population, 2)
@@ -39,7 +34,7 @@ function privateDE(
 
    map(eachrow(input.population)) do individual
       #input.population, input.fitness
-      h = fcross(input.population, input.fitness, individual, fbest)
+      h = input.fcross(input.population, input.fitness, individual, fbest)
 
       clamp!(h, dmin, dmax)
       nextpop = [nextpop; h]
@@ -51,5 +46,5 @@ function privateDE(
    input.fitness[idx] = nextfit[idx]
    input.population[idx, :] = nextpop[idx, :]
 
-   Result(input.population, input.fitness, fbest(input.fitness), popsize)
+   input.nEvals += length(nextfit)
 end

@@ -10,7 +10,7 @@ function optimize(
    ndim = missing,
    dmin = missing,
    dmax = missing,
-   alg::Function = SSGA,
+   alg = SSGA,
    fcallback::Function = callback_none,
 )
 
@@ -64,13 +64,15 @@ function optimize(
       eval = 0
    end
 
-   result = Result(population, fitness, fbest(fitness), eval)
+   alg.nEvals += eval
+   alg.population = population
+   alg.fitness = fitness
 
    i = 1
-   while eval + popsize < maxeval
+   while alg.nEvals + popsize < maxeval
 
-      result = alg(
-         result,
+      optimize!(
+         alg,
          ffitness,
          maxeval,
          maximize,
@@ -81,10 +83,9 @@ function optimize(
          dmax,
       )
 
-      fcallback(i, result.population, result.fitness, fbest)
-      eval += result.evals
+      fcallback(i, alg.population, alg.fitness, fbest)
       i += 1
    end
 
-   return Result(result.population, result.fitness, fbest(result.fitness), eval)
+   return Result(alg.population, alg.fitness, alg.nEvals)
 end

@@ -19,8 +19,8 @@ using Test
             alg = alg,
         )
 
-        @test result.evals <= 1000
-        @test all(result.fitness[result.bestidx] .>= result.fitness)
+        @test result.nEvals <= 1000
+        @test all(maximum(result.fitness) .>= result.fitness)
         @test all(map(feval, eachrow(result.population)) == result.fitness)
         @test result.population == clamp.(result.population, 0, 10)
 
@@ -41,8 +41,8 @@ using Test
             alg = alg,
         )
 
-        @test result.evals <= 1000
-        @test all(result.fitness[result.bestidx] .>= result.fitness)
+        @test result.nEvals <= 1000
+        @test all(maximum(result.fitness) .>= result.fitness)
         @test all(map(feval, eachrow(result.population)) == result.fitness)
         @test result.population == clamp.(result.population, 0, 10)
     end
@@ -62,8 +62,8 @@ using Test
             alg = alg,
         )
 
-        @test result.evals <= 1000
-        @test all(result.fitness[result.bestidx] .>= result.fitness)
+        @test result.nEvals <= 1000
+        @test all(maximum(result.fitness) .>= result.fitness)
         @test all(map(feval, eachrow(result.population)) == result.fitness)
         @test result.population == clamp.(result.population, 0, 10)
     end
@@ -84,8 +84,8 @@ using Test
             alg = alg
         )
 
-        @test result.evals <= 1000
-        @test all(result.fitness[result.bestidx] .>= result.fitness)
+        @test result.nEvals <= 1000
+        @test all(maximum(result.fitness) .>= result.fitness)
         @test all(map(feval, eachrow(result.population)) == result.fitness)
         @test result.population == clamp.(result.population, 0, 10)
     end
