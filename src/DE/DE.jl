@@ -1,8 +1,6 @@
 include("../utility/selection.jl")
-include("../utility/callbacks.jl")
 include("util/cross.jl")
 
-using Distributions
 
 export DE
 
@@ -13,9 +11,10 @@ mutable struct DEIn
    fcross::Function
 end
 
-function setData!(self::DEIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+function initialize!(self::DEIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
    self.population = population
    self.fitness = fitness
+   nothing
 end
 
 function DE(; fcross::Function = bestCross)

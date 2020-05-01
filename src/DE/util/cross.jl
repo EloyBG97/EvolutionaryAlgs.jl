@@ -1,5 +1,3 @@
-using DocStringExtensions
-
 """
 $(SIGNATURES)
 Generate child from the best to 2 ramdomly taken parents\n

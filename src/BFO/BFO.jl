@@ -1,5 +1,3 @@
-include("../utility/callbacks.jl")
-
 export BFO
 
 mutable struct BFOIn
@@ -13,9 +11,10 @@ mutable struct BFOIn
    runLength::Real
 end
 
-function setData!(self::BFOIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+function initialize!(self::BFOIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
    self.population = population
    self.fitness = fitness
+   nothing
 end
 
 function BFO(;

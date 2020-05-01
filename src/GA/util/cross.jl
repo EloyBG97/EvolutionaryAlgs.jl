@@ -1,6 +1,3 @@
-using DocStringExtensions
-using Distributions
-
 """
 $(SIGNATURES)
 The child is the arithmetic mean of parents\n

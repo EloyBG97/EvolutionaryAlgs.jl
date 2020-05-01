@@ -1,8 +1,3 @@
-using Random
-using StatsBase
-using Distances
-using DocStringExtensions
-
 """
 $(SIGNATURES)
 For each gen, is been assigned a probability to be chosen by the next formula:\n

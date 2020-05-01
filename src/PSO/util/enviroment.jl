@@ -1,5 +1,3 @@
-using Distances
-
 function findEnviroment(
     population::AbstractArray{<:Real,2},
     fitness::AbstractArray{<:Real,1},

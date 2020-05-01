@@ -1,3 +1,5 @@
+export callback_print
+
 function callback_none(i, population, fitness, fbest)
     nothing
 end

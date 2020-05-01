@@ -17,7 +17,7 @@ mutable struct PSOGIn
    phi2::Real           
 end
 
-function setData!(self::PSOGIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+function initialize!(self::PSOGIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
    self.population = population
    self.bestpop = population
 
@@ -25,6 +25,8 @@ function setData!(self::PSOGIn, population::AbstractArray{<:Real, 2}, fitness::A
    self.bestfit = fitness
 
    self.velocity = rand(Uniform(self.vmin, self.vmax), size(population))
+
+   nothing
 end
 
 #BEGIN STRUCT DEFINITION
@@ -43,7 +45,7 @@ mutable struct PSOLIn
    sizeEnv::Integer
 end
 
-function setData!(self::PSOLIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+function initialize!(self::PSOLIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
    self.population = population
    self.bestpop = population
 
@@ -51,6 +53,7 @@ function setData!(self::PSOLIn, population::AbstractArray{<:Real, 2}, fitness::A
    self.bestfit = fitness
 
    self.velocity = rand(Uniform(self.vmin, self.vmax), size(population))
+   nothing
 end
 
 

@@ -67,7 +67,7 @@ function optimize(
    end
 
    alg.nEvals += eval
-   setData!(alg, population, fitness)
+   initialize!(alg, population, fitness)
 
    i = 1
    while alg.nEvals + popsize < maxeval

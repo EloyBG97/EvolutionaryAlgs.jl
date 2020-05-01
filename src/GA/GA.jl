@@ -1,10 +1,7 @@
 include("../utility/selection.jl")
 include("util/cross.jl")
 include("util/mutation.jl")
-include("../utility/callbacks.jl")
 
-
-using Distributions
 
 export SSGA, GGA
 
@@ -19,9 +16,11 @@ mutable struct SSGAIn
 end
 
 
-function setData!(self::SSGAIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+function initialize!(self::SSGAIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
    self.population = population
    self.fitness = fitness
+
+   nothing
 end
 
 
@@ -36,9 +35,11 @@ mutable struct GGAIn
    pcross::Real
 end
 
-function setData!(self::GGAIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+function initialize!(self::GGAIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
    self.population = population
    self.fitness = fitness
+
+   nothing
 end
 
 function SSGA(;
