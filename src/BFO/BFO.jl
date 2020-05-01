@@ -3,24 +3,30 @@ include("../utility/result.jl")
 
 export BFO
 
+mutable struct BFOIn
+   population::AbstractArray{<:Real, 2}
+   fitness::AbstractArray{<:Real, 1}
+   nEvals::Integer
+   chemostaticStep::Integer
+   swimStep::Integer
+   reproductiveStep::Integer
+   Ped::Real
+   runLength::Real
+end
+
 function BFO(;
-   chemotasticStep::Integer = 20,
-   swinStep::Integer = 20,
+   chemostaticStep::Integer = 20,
+   swimStep::Integer = 20,
    reproductiveStep::Integer = 20,
    Ped::Real = 0.9,
-   runLenght::Real = 0.01
+   runLength::Real = 0.01
 )
-
-   (result, ffitness, maxeval, maximize, cmp, fbest, fworst, dmin, dmax) -> 
-      
-      iterateBFO(result, ffitness, maxeval, maximize, cmp,  fbest, fworst,
-         dmin, dmax, chemotasticStep = chemotasticStep, swinStep = swinStep, 
-         reproductiveStep = reproductiveStep, Ped = Ped, runLenght = runLenght)
+   BFOIn(Array{Float32}(undef, 0, 0), Array{Float32}(undef, 0), 0, chemostaticStep, swimStep, reproductiveStep, Ped, runLength)
 
 end
 
-function iterateBFO(
-   result::Result,
+function optimize!(
+   input::BFOIn,
    ffitness::Function,
    maxeval::Integer,
    maximize::Bool,
@@ -29,35 +35,27 @@ function iterateBFO(
    fworst::Function,
    dmin::Real = 0.0,
    dmax::Real = 1.0;
-
-   chemotasticStep::Integer = 20,
-   swinStep::Integer = 20,
-   reproductiveStep::Integer = 20,
-   Ped::Real = 0.9,
-   runLenght::Real = 0.01,
-
 )
-   eval = 0
-   Jlast =result.fitness
+   Jlast = input.fitness
 
-   popsize = size(result.population, 1)
-   ndim = size(result.population, 2)
+   popsize = size(input.population, 1)
+   ndim = size(input.population, 2)
 
-   best = fbest(result.fitness)
-   bestfit =result.fitness[best]
-   bestpop = result.population[best, :]
+   best = fbest(input.fitness)
+   bestfit =input.fitness[best]
+   bestpop = input.population[best, :]
 
    k = 0
 
-   while k < reproductiveStep && (eval + popsize) < maxeval
-      Jchem =result.fitness
+   while k < input.reproductiveStep && (input.nEvals + popsize) < maxeval
+      Jchem =input.fitness
       j = 0
 
-      while j < chemotasticStep && (eval + popsize) < maxeval
+      while j < input.chemostaticStep && (input.nEvals + popsize) < maxeval
          m = 0
 
-         while m < swinStep && (eval + popsize) < maxeval
-            Jlast =result.fitness
+         while m < input.swimStep && (input.nEvals + popsize) < maxeval
+            Jlast = input.fitness
 
             del = rand(Uniform(-1, 1), popsize, ndim)
 
@@ -65,36 +63,37 @@ function iterateBFO(
                sqrt(x'x)
             end
 
-            result.population = result.population + (runLenght ./ dotpro) .* del
+            input.population = input.population + (input.runLength ./ dotpro) .* del
 
-            #If JLast is better thanresult.fitness
-            idx = cmp.(result.fitness, Jlast)
-            result.population[idx, :] =
-               result.population[idx, :] +
-               runLenght * (
+            #If JLast is better than fitness
+            idx = cmp.(input.fitness, Jlast)
+            input.population[idx, :] =
+               input.population[idx, :] +
+               input.runLength * (
                   del[idx, :] ./
                   sqrt.(sum(del[idx, :] .* del[idx, :], dims = 2))
                )
 
-            #If JLast is worse thanresult.fitness
+            #If JLast is worse than fitness
             idx = .!idx
             del = rand(Uniform(-1, 1), popsize, ndim)
 
-            result.population[idx, :] =
-               result.population[idx, :] +
-               runLenght * (
+            input.population[idx, :] =
+               input.population[idx, :] +
+               input.runLength * (
                   del[idx, :] ./
                   sqrt.(sum(del[idx, :] .* del[idx, :], dims = 2))
                )
 
-            clamp!(result.population, dmin, dmax)
+            clamp!(input.population, dmin, dmax)
 
-           result.fitness = map(ffitness, eachrow(result.population))
-            eval += popsize
+            input.fitness = map(ffitness, eachrow(input.population))
+            
+            input.nEvals += popsize
 
          end
 
-         Jchem = [Jchem result.fitness]
+         Jchem = [Jchem input.fitness]
       end
 
 
@@ -105,27 +104,31 @@ function iterateBFO(
       I = sortperm(Jhealth, rev = maximize)
 
       halfidx = I[1:div(popsize, 2)]
-      halfpop = result.population[halfidx, :]
-      halffit =result.fitness[halfidx]
+      halfpop = input.population[halfidx, :]
+      halffit = input.fitness[halfidx]
 
-      result.population = [halfpop; halfpop]
-     result.fitness = [halffit; halffit]
+      input.population = [halfpop; halfpop]
+      input.fitness = [halffit; halffit]
    end
 
 
    r = rand(popsize)
 
-   idx = r .> Ped
+   idx = r .> input.Ped
    n = count(x -> x == 1, idx)
 
-   result.population[idx, :] = rand(Uniform(dmin, dmax), n, ndim)
-   result.fitness[idx] = map(ffitness, eachrow(result.population[idx, :]))
-   eval += n
+   if(input.nEvals + n > maxeval)
+      idx = idx[:maxevals]
+   end
 
-   worst = fworst(result.fitness)
-   result.fitness[worst] = bestfit
-   result.population[worst, :] = bestpop
+   input.population[idx, :] = rand(Uniform(dmin, dmax), n, ndim)
+   input.fitness[idx] = map(ffitness, eachrow(input.population[idx, :]))
+   
+   input.nEvals += length(idx)
 
-   return Result(result.population,result.fitness, fbest(result.fitness), eval)
+   worst = fworst(input.fitness)
+   input.fitness[worst] = bestfit
+   input.population[worst, :] = bestpop
 
+   nothing
 end
