@@ -1,8 +1,3 @@
-using Random
-using StatsBase
-using Distances
-using DocStringExtensions
-
 """
 $(SIGNATURES)
 For each gen, is been assigned a probability to be chosen by the next formula:\n
@@ -12,6 +7,21 @@ For each gen, is been assigned a probability to be chosen by the next formula:\n
 fitnes -> fitness value array\n
 """
 function roulette_wheel_selection(
+    population::AbstractArray{<:Real,2},
+    fitness::AbstractArray{<:Real,1},
+)
+
+    p1 = roulette_wheel_selection_parent(population, fitness)
+    p2 = roulette_wheel_selection_parent(population, fitness)
+
+    while p1 == p2 
+        p2 = roulette_wheel_selection_parent(population, fitness)
+    end
+
+    [p1, p2]
+end
+
+function roulette_wheel_selection_parent(
     population::AbstractArray{<:Real,2},
     fitness::AbstractArray{<:Real,1},
 )
@@ -35,13 +45,29 @@ function roulette_wheel_selection(
 
 end
 
+
 """
 $(SIGNATURES)
 For each gen, is been assigned a probability to be chosen by the fitness value\n
 fitnes -> fitness value array\n
 """
 function linear_selection(
-    fpopulation::AbstractArray{<:Real,2},
+    population::AbstractArray{<:Real,2},
+    fitness::AbstractArray{<:Real,1},
+)
+
+    p1 = linear_selection_parent(population, fitness)
+    p2 = linear_selection_parent(population, fitness)
+
+    while p1 == p2
+        p2 = linear_selection_parent(population, fitness)
+    end
+
+    [p1, p2]
+end
+
+function linear_selection_parent(
+    population::AbstractArray{<:Real,2},
     fitness::AbstractArray{<:Real,1},
 )
     maxfitness = 1 / maximum(fitness)
@@ -61,14 +87,28 @@ function linear_selection(
     findall(x -> x == fitness_sort[i], fitness)[1]
 end
 
-
 """
 $(SIGNATURES)
 Take k random fitness and select the best of them's index\n
 fitnes -> fitness value array\n
-k -> Number of competitors\n
+ak -> Number of competitors\n
 """
 function tournament_selection(
+    population::AbstractArray{<:Real,2},
+    fitness::AbstractArray{<:Real,1};
+    k::Integer = 3,
+)
+    p1 = tournament_selection_parent(population, fitness, k = k)
+    p2 = tournament_selection_parent(population, fitness, k = k)
+
+    while p1 == p2
+        p2 = tournament_selection_parent(population, fitness, k = k)
+    end
+
+    [p1, p2]
+end
+
+function tournament_selection_parent(
     population::AbstractArray{<:Real,2},
     fitness::AbstractArray{<:Real,1};
     k::Integer = 3,
@@ -107,5 +147,5 @@ function reverse_mixed_pairing_selection(
     )
     parent = findmax(_distance)[2]
 
-    p2[parent]
+    [p1, p2[parent]]
 end

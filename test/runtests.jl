@@ -7,6 +7,8 @@ using Test
     include("GA/GA.jl")
     include("DE/DE.jl")
     include("BFO/BFO.jl")
-    include("optimize/optimize.jl")
+    include("PSO/PSO.jl")
+    include("FA/FA.jl")
+    include("GSA/GSA.jl")
     include("utility/utility.jl")
 end

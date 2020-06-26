@@ -4,6 +4,7 @@ authors = ["EloyBG97"]
 version = "0.1.0"
 
 [deps]
+CMAEvolutionStrategy = "8d3b24bd-414e-49e0-94fb-163cc3a3e411"
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"

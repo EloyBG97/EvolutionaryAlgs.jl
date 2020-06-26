@@ -1,10 +1,7 @@
 include("../utility/selection.jl")
 include("util/cross.jl")
 include("util/mutation.jl")
-include("../utility/callbacks.jl")
 
-
-using Distributions
 
 export SSGA, GGA
 
@@ -19,9 +16,11 @@ mutable struct SSGAIn
 end
 
 
-function setData!(self::SSGAIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+function initialize!(self::SSGAIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
    self.population = population
    self.fitness = fitness
+
+   nothing
 end
 
 
@@ -36,11 +35,21 @@ mutable struct GGAIn
    pcross::Real
 end
 
-function setData!(self::GGAIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
+function initialize!(self::GGAIn, population::AbstractArray{<:Real, 2}, fitness::AbstractArray{<:Real, 1})
    self.population = population
    self.fitness = fitness
+
+   nothing
 end
 
+"""
+$(SIGNATURES)
+Stationary Genetic Algorithm\n
+fcross -> Cross Function\n
+fselect -> Selection Function\n
+fmutation -> Mutation Function\n
+pmutation -> Mutation Probability\n
+"""
 function SSGA(;
    fcross::Function = blx_cross,
    fselect::Function = roulette_wheel_selection,
@@ -51,6 +60,15 @@ function SSGA(;
    SSGAIn(Array{Float32}(undef, 0, 0), Array{Float32}(undef, 0), 0, fcross, fselect, fmutation, pmutation)
 end
 
+"""
+$(SIGNATURES)
+Generacional Genetic Algorithm\n
+fcross -> Cross Function\n
+fselect -> Selection Function\n
+fmutation -> Mutation Function\n
+pmutation -> Mutation Probability\n
+pcross -> Cross Probability\n
+"""
 function GGA(;
    fcross::Function = blx_cross,
    fselect::Function = roulette_wheel_selection,
@@ -78,12 +96,7 @@ function optimize!(
    @assert 0 <= input.pmutation <= 1 "pmutation must be in [0,1]"
    
 
-   p1_idx = input.fselect(input.population, input.fitness)
-   p2_idx = input.fselect(input.population, input.fitness)
-
-   while p1_idx == p2_idx
-      p2_idx = input.fselect(input.population, input.fitness)
-   end
+   (p1_idx, p2_idx) = input.fselect(input.population, input.fitness)
 
    p1 = input.population[p1_idx, :]
    p2 = input.population[p2_idx, :]
@@ -140,13 +153,7 @@ function optimize!(
    fit_children = nothing
 
    for _ = 1:ncross
-      p1_idx = input.fselect(input.population, input.fitness)
-
-      p2_idx = input.fselect(input.population, input.fitness)
-
-      while p2_idx == p1_idx
-         p2_idx = input.fselect(input.population, input.fitness)
-      end
+      (p1_idx, p2_idx) = input.fselect(input.population, input.fitness)
 
       p1 = input.population[p1_idx, :]
       p2 = input.population[p2_idx, :]

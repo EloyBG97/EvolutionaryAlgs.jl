@@ -2,6 +2,21 @@ include("../utility/result.jl")
 
 export optimize
 
+"""
+$(SIGNATURES)
+Optimization\n
+ffitness -> Fitness Evaluation Function\n
+maxeval -> Max Evaluations Number\n
+maximize -> If you want to maximize ffitness\n
+population -> \n
+fitness -> \n
+popsize -> Population size\n
+ndim -> Dimension of each Indvidual\n
+dmin -> Min Domain Range\n
+dmax -> Max Domain Range\n
+alg -> Evolutionary Algorithm\n
+fcallback -> Callback funtion called each iteration\n
+"""
 function optimize(
    ffitness::Function,
    maxeval::Integer;
@@ -12,14 +27,13 @@ function optimize(
    ndim = missing,
    dmin = missing,
    dmax = missing,
-   alg = SSGA,
+   alg = SSGA(),
    fcallback::Function = callback_none,
 )
 
    @assert ((!ismissing(popsize) && !ismissing(ndim)) || !ismissing(population)) "Error, ndim and popsize must be defined"
-   @assert dmin < dmax "dmin must be lower than dmax"
    @assert maxeval > 0 "maxeval max be positive"
-
+   
    if maximize
       fbest = argmax
       fworst = argmin
@@ -39,7 +53,7 @@ function optimize(
          @assert dmin <= floor(minimum(population)) "dmin no valid"
       end
 
-      if(ismissing(dmin))
+      if(ismissing(dmax))
          dmax = ceil(maximum(population))
       else
          @assert dmax >= ceil(maximum(population)) "dmax no valid"
@@ -58,6 +72,7 @@ function optimize(
       end
    end
 
+
    if ismissing(fitness)
       fitness = map(ffitness, eachrow(population))
       eval = popsize
@@ -66,11 +81,22 @@ function optimize(
       eval = 0
    end
 
+ 
    alg.nEvals += eval
-   setData!(alg, population, fitness)
+   initialize!(alg, population, fitness)
 
    i = 1
-   while alg.nEvals + popsize < maxeval
+   
+   pop = similar(population)
+   fit = similar(fitness)
+   eval = 0
+
+   while  alg.nEvals  < maxeval
+      pop = copy(population)
+      fit = copy(fitness)
+      eval = alg.nEvals
+
+      fcallback(eval, alg.population, alg.fitness, fbest)
 
       optimize!(
          alg,
@@ -84,9 +110,9 @@ function optimize(
          dmax,
       )
 
-      fcallback(i, alg.population, alg.fitness, fbest)
+     
       i += 1
    end
 
-   return Result(alg.population, alg.fitness, alg.nEvals)
+   return Result(pop, fit, eval)
 end

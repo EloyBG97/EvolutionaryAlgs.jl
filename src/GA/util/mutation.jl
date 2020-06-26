@@ -1,6 +1,3 @@
-using Distributions
-using DocStringExtensions
-
 """
 $(SIGNATURES)
 Add to each value N(0, σ)\n
