@@ -9,5 +9,6 @@ using Test
     include("BFO/BFO.jl")
     include("PSO/PSO.jl")
     include("FA/FA.jl")
+    include("GSA/GSA.jl")
     include("utility/utility.jl")
 end

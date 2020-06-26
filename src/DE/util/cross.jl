@@ -1,14 +1,12 @@
 """
 $(SIGNATURES)
 Generate child from the best to 2 ramdomly taken parents\n
+population -> Current population\n
+fitness -> Population cost\n
 current -> Current individual\n
-best -> best individual\n
-parent1 -> Random individual\n
-parent2 -> Random individual\n
+fbest -> Function to choose the best individual\n
 f -> Cross Strenght\n
 p -> Cross Probability\n
-dmin -> Minimun gen value\n
-dmax -> Maximun gen value\n
 """
 function bestCross(
     population::AbstractArray{<:Real,2},
@@ -20,15 +18,17 @@ function bestCross(
 )
 
 
-    n = length(current)
-    pidx = rand(1:n, 2)
+    popsize = size(population, 1)
+    ndim = size(population, 2)
+
+    pidx = rand(1:popsize, 2)
 
     bestidx = fbest(fitness)
 
     parents = population[pidx, :]
     offspring = copy(current)
 
-    idx = rand(n) .> p
+    idx = rand(ndim) .> p
     offspring[idx] =
         population[bestidx, idx] + f * (parents[1, idx] - parents[2, idx])
 
@@ -38,14 +38,12 @@ end
 """
 $(SIGNATURES)
 Generate child from the current to the best\n
+population -> Current population\n
+fitness -> population cost\n
 current -> Current individual\n
-best -> best individual\n
-parent1 -> Random individual\n
-parent2 -> Random individual\n
+fbest -> Funtion to choose the best individual\n
 f -> Cross Strenght\n
 p -> Cross Probability\n
-dmin -> Minimun gen value\n
-dmax -> Maximun gen value\n
 """
 function current2bestCross(
     population::AbstractArray{<:Real,2},

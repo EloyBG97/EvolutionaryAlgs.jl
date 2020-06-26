@@ -1,14 +1,16 @@
-export callback_print
+export callback_print, callback_plot
 
-function callback_none(i, population, fitness, fbest)
+function callback_none(evals, population, fitness, fbest)
     nothing
 end
 
-function callback_print(i, pop, fit, fbest)
+function callback_print(evals, pop, fit, fbest)
     best = fbest(fit)
 
     #print log
-    println("Iteration ", i, ": ")
+    println("Num Evals ", evals, ": ")
     println(pop[best, :])
     println(fit[best])
 end
+
+

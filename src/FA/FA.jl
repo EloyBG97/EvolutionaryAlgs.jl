@@ -16,6 +16,11 @@ function initialize!(self::FAIn, population::AbstractArray{<:Real}, fitness::Abs
    nothing
 end
 
+"""
+$(SIGNATURES)
+lightAbsortion -> Light Aabsortion Level\n
+distance -> Distance Calculation Function\n
+"""
 function FA(;lightAbsortion::Real = 0.3, distance::Metric = Euclidean())
    FAIn(Array{Float32}(undef, 0, 0), Array{Float64}(undef, 0), 0, 
         lightAbsortion, distance)
@@ -35,6 +40,9 @@ function optimize!(
     popsize = size(input.population, 1)
     ndim = size(input.population, 2)
 
+    newpop = similar(input.population)
+    newfit = similar(input.fitness)
+
     for i = 1:popsize
         popaux = reshape(input.population[i, :], 1, ndim)
         idx = cmp.(input.fitness[i], input.fitness)
@@ -46,13 +54,21 @@ function optimize!(
 
         atractiveness = exp.(-2 * input.lightAbsortion .* dist)
 
-        input.population[idx, :] =
+        newpop  =
             input.population[idx, :] + atractiveness .* (input.population[idx, :] .- popaux)
    
-        clamp!(input.population, dmin, dmax)        
+        clamp!(newpop, dmin, dmax)        
 
-        input.fitness = map(ffitness, eachrow(input.population))
+        newfit = map(ffitness, eachrow(newpop))
     end
+
+    input.fitness = [input.fitness; newfit]
+    input.population = [input.population; newpop]
+
+    idx = sortperm(input.fitness, rev = maximize)
+
+    input.population = input.population[ idx[1:popsize], : ]
+    input.fitness = input.fitness[ idx[1:popsize] ]   
 
     input.nEvals += popsize*popsize
     nothing

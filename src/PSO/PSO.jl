@@ -57,11 +57,29 @@ function initialize!(self::PSOLIn, population::AbstractArray{<:Real, 2}, fitness
 end
 
 
+"""
+$(SIGNATURES)
+Global Particle Swarm\n
+vmin -> Minimal Particles Velocity\n
+vmax -> Maximal Particles Velocity\n
+phi1 -> Actual Optimal Influence
+phi2 -> Global optimal Influence
+"""
 function PSOG(; vmax::Real = 1, vmin::Real = 0, phi1::Real = 1.05, phi2::Real = 1.05)
    PSOGIn(Array{Float32}(undef, 0, 0), Array{Float64}(undef, 0), 0,
         Array{Float32}(undef, 0, 0), Array{Float64}(undef, 0),
         Array{Float32}(undef, 0, 0), vmax, vmin, phi1, phi2)
 end
+
+"""
+$(SIGNATURES)
+Local Particle Swarm\n
+vmin -> Minimal Particles Velocity\n
+vmax -> Maximal Particles Velocity\n
+phi1 -> Actual Optimal Influence
+phi2 -> Global optimal Influence
+sizeEnv -> Enviroment Size
+"""
 
 function PSOL(; vmax::Real = 1, vmin::Real = 0, phi1::Real = 1.05, phi2::Real = 1.05, sizeEnv::Integer = 3)
    PSOLIn(Array{Float32}(undef, 0, 0), Array{Float64}(undef, 0), 0,
