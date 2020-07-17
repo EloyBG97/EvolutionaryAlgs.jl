@@ -71,7 +71,7 @@ function optimize!(
 
          while j < input.chemotacticStep && (input.nEvals + popsize) < maxeval
             m = 0
-
+	    letswim = ones(popsize)
             
 
             while m < input.swimStep && (input.nEvals + popsize) < maxeval
@@ -85,6 +85,7 @@ function optimize!(
 
                #If JLast is better than fitness
                idx = cmp.(input.fitness, Jlast)
+               idx = idx .& letswim
                Jlast[idx] = input.fitness[idx]
                input.population[idx, :] =
                  input.population[idx, :] +
@@ -95,14 +96,7 @@ function optimize!(
 
                #If JLast is worse than fitness
                idx = .!idx
-               del = rand(Uniform(-1, 1), popsize, ndim)
-
-               input.population[idx, :] =
-                  input.population[idx, :] +
-                  input.runLength * (
-                     del[idx, :] ./
-                     sqrt.(sum(del[idx, :] .* del[idx, :], dims = 2))
-                  )
+               letswim[idx] = zeros(sum(idx))
 
                clamp!(input.population, dmin, dmax)
 
