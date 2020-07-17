@@ -148,7 +148,27 @@ function optimize!(
    nextpop = Array{Real,2}(undef, 0, ndim)
    nextfit = Array{Real,1}(undef, 0)
 
-   ncross = ceil(input.pcross * popsize)
+   (p1_idx, p2_idx) = input.fselect(input.population, input.fitness)
+
+   p1 = input.population[p1_idx, :]
+   p2 = input.population[p2_idx, :]
+
+   h = input.fcross(p1, p2)
+ 
+ 
+   map(eachrow(h)) do x
+      if input.pmutation < rand()
+         input.fmutation(x)
+      end
+   end
+ 
+   clamp!(h, dmin, dmax)
+   nextpop = [nextpop; h]
+   fit_children = map(ffitness, eachrow(h)) 
+   nextfit = [nextfit; fit_children]
+
+
+   ncross = div(ceil(input.pcross * popsize), length(h)) - 1
 
    fit_children = nothing
 
@@ -178,22 +198,18 @@ function optimize!(
    end
 
    
-   bestnextpop = sortperm(nextfit)
-   nextpop = nextpop[bestnextpop, :]
-   nextfit = nextfit[bestnextpop]
-
    #Elitism
    best = fbest(input.fitness)
    bestpop = input.population[best, :]
    bestfit = input.fitness[best]
 
-   input.population = nextpop[1:popsize, :]
-   input.fitness = nextfit[1:popsize]
+   input.population = nextpop
+   input.fitness = nextfit
 
    worst = fworst(input.fitness)
    input.fitness[worst] = bestfit
    input.population[worst, :] = bestpop
 
-   input.nEvals += ncross * length(fit_children)
+   input.nEvals += length(nextfit)
    nothing
 end

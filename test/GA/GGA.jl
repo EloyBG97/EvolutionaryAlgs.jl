@@ -18,7 +18,7 @@ using Test
             dmax = 10,
             alg = alg,
         )
-        
+        @test size(result.population) == (60,2)       
         @test result.nEvals <= 1000
         @test all(maximum(result.fitness) .>= result.fitness)
         @test all(map(feval, eachrow(result.population)) == result.fitness)
