@@ -4,8 +4,7 @@ using Test
    
 @testset "GGA.jl" begin
     begin 
-        alg = GGA(pcross = 0.75, pmutation = 0.25)
-        
+        alg = GGA(pcross = 0.75, pmutation = 0.25, fcross = arithmetic_cross)
         feval = x -> x[1] * x[1] + x[2] * x[2]
    
         result = optimize(

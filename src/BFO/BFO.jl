@@ -59,8 +59,8 @@ function optimize!(
    best = fbest(input.fitness)
    bestfit =input.fitness[best]
    bestpop = input.population[best, :]
-
    i = 0
+   
    while i < input.eliminationStep && (input.nEvals + popsize) < maxeval
    
    k = 0
@@ -71,21 +71,14 @@ function optimize!(
 
          while j < input.chemotacticStep && (input.nEvals + popsize) < maxeval
             m = 0
-	    letswim = ones(popsize)
-            
+	    letswim = BitArray(ones(popsize))
 
             while m < input.swimStep && (input.nEvals + popsize) < maxeval
                del = rand(Uniform(-1, 1), popsize, ndim)
 
-               dotpro = map(eachrow(del)) do x
-                  sqrt(x'x)
-               end
-
-               input.population = input.population + (input.runLength ./ dotpro) .* del
-
                #If JLast is better than fitness
-               idx = cmp.(input.fitness, Jlast)
-               idx = idx .& letswim
+              idx = cmp.(input.fitness, Jlast) 
+              idx = idx .& letswim
                Jlast[idx] = input.fitness[idx]
                input.population[idx, :] =
                  input.population[idx, :] +
@@ -101,8 +94,10 @@ function optimize!(
                clamp!(input.population, dmin, dmax)
 
                input.fitness = map(ffitness, eachrow(input.population))
-            
                input.nEvals += popsize
+
+               idx = cmp.(input.fitness, Jlast)
+
 
             end #END SWIM
 

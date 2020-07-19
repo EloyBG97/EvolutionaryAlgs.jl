@@ -145,59 +145,45 @@ function optimize!(
    popsize = size(input.population, 1)
    ndim = size(input.population, 2)
 
-   nextpop = Array{Real,2}(undef, 0, ndim)
-   nextfit = Array{Real,1}(undef, 0)
-
-   (p1_idx, p2_idx) = input.fselect(input.population, input.fitness)
-
-   p1 = input.population[p1_idx, :]
-   p2 = input.population[p2_idx, :]
-
-   h = input.fcross(p1, p2)
- 
- 
-   map(eachrow(h)) do x
-      if input.pmutation < rand()
-         input.fmutation(x)
-      end
-   end
- 
-   clamp!(h, dmin, dmax)
-   nextpop = [nextpop; h]
-   fit_children = map(ffitness, eachrow(h)) 
-   nextfit = [nextfit; fit_children]
-
-
-   ncross = div(ceil(input.pcross * popsize), length(h)) - 1
-
+   nextpop = Array{Float32}(undef, 0, ndim)
+   
    fit_children = nothing
 
-   for _ = 1:ncross
+   for _ = 1:div(popsize,2)
       (p1_idx, p2_idx) = input.fselect(input.population, input.fitness)
 
       p1 = input.population[p1_idx, :]
       p2 = input.population[p2_idx, :]
 
 
-      h = input.fcross(p1, p2)
+      if rand() < input.pcross
+          h = input.fcross(p1, p2)
 
 
-      map(eachrow(h)) do x
-         if input.pmutation < rand()
-            input.fmutation(x)
-         end
+          map(eachrow(h)) do x
+             if input.pmutation < rand()
+                input.fmutation(x)
+             end
+          end
+
+          clamp!(h, dmin, dmax)
+
+          if(size(h,1) == 1)
+              p1 = reshape(p1, 1, ndim)
+              h = [h; p1]
+          end
+
+          nextpop = [nextpop; h]
+      else
+          p1 = reshape(p1, 1, ndim)
+          p2 = reshape(p2, 1, ndim)
+          nextpop = [nextpop; p1; p2]
       end
 
-      clamp!(h, dmin, dmax)
-
-      nextpop = [nextpop; h]
-
-      fit_children = map(ffitness, eachrow(h))
-
-      nextfit = [nextfit; fit_children]
    end
 
-   
+   nextfit = map(ffitness, eachrow(nextpop))
+
    #Elitism
    best = fbest(input.fitness)
    bestpop = input.population[best, :]

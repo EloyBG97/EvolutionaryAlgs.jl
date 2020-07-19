@@ -1,3 +1,6 @@
+export arithmetic_cross
+export blx_cross
+
 """
 $(SIGNATURES)
 The child is the arithmetic mean of parents\n
