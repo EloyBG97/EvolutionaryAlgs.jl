@@ -92,8 +92,8 @@ function optimize(
    eval = 0
 
    while  alg.nEvals  < maxeval
-      pop = copy(population)
-      fit = copy(fitness)
+      pop = copy(alg.population)
+      fit = copy(alg.fitness)
       eval = alg.nEvals
 
       fcallback(eval, alg.population, alg.fitness, fbest)
@@ -110,9 +110,9 @@ function optimize(
          dmax,
       )
 
-     
+   
       i += 1
    end
 
-   return Result(pop, fit, eval)
+   return Result(alg.population, alg.fitness, eval)
 end

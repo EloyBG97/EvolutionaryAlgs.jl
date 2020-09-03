@@ -94,7 +94,7 @@ function optimize!(
 )
 
    @assert 0 <= input.pmutation <= 1 "pmutation must be in [0,1]"
-   
+
 
    (p1_idx, p2_idx) = input.fselect(input.population, input.fitness)
 
@@ -141,12 +141,11 @@ function optimize!(
    @assert 0 <= input.pmutation <= 1 "pmutation must be in [0,1]"
    @assert 0 <= input.pcross <= 1 "pcross must be in [0,1]"
 
-
    popsize = size(input.population, 1)
    ndim = size(input.population, 2)
 
    nextpop = Array{Float32}(undef, 0, ndim)
-   
+
    fit_children = nothing
 
    for _ = 1:div(popsize,2)
